@@ -1,0 +1,17 @@
+{
+  "audited_folder": "./data",
+  "date_range": {
+    "from": "2026-05-01",
+    "to": "2026-05-31"
+  },
+  "matching_mode": "strict",
+  "account_currencies_found": ["USD"],
+  "totals": {
+    "income_usd": "0.00",
+    "spend_usd": "0.00"
+  },
+  "processed_files": [],
+  "excluded_internal_transfers": [],
+  "excluded_internal_conversions": [],
+  "warnings": []
+}
