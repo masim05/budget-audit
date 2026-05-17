@@ -10,6 +10,7 @@
 
 ```bash
 npm install
+npm run build
 ```
 
 ## Validate Statement Input
@@ -25,26 +26,28 @@ Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD)
 Audits `./data` for the previous full calendar month using strict matching:
 
 ```bash
-budget-audit audit
+npm run audit
 ```
 
 ## Run A Custom Audit
 
 ```bash
-budget-audit audit --data-dir ./data --from 2026-05-01 --to 2026-05-31
+npm run audit -- --data-dir ./data --from 2026-05-01 --to 2026-05-31
 ```
 
 ## Use Permissive Matching
 
 ```bash
-budget-audit audit --matching-mode permissive
+npm run audit -- --matching-mode permissive
 ```
 
 ## Write JSON Report To A File
 
 ```bash
-budget-audit audit --format json --output reports/may-2026.json
+npm run audit -- --format json --output reports/may-2026.json
 ```
+
+To use `budget-audit audit` directly during local development, run `npm link` once after building.
 
 The report file is optional local file output. The application must not require a database.
 

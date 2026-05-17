@@ -11,6 +11,22 @@ npm run build
 
 ## Run
 
+For local development, run the CLI through npm after building:
+
+```bash
+npm run audit
+npm run audit -- --data-dir ./data --from 2026-05-01 --to 2026-05-31
+npm run audit -- --matching-mode permissive --format json --output reports/may-2026.json
+```
+
+To make the `budget-audit` command available directly in your shell, link the package first:
+
+```bash
+npm link
+```
+
+Then run:
+
 ```bash
 budget-audit audit
 budget-audit audit --data-dir ./data --from 2026-05-01 --to 2026-05-31
