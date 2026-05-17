@@ -29,6 +29,12 @@ describe('classification', () => {
     ).toBe('spend');
     expect(classifyExternalTransaction({ ...base, debit: 100n })).toBe('spend');
     expect(
+      classifyExternalTransaction({ ...base, credit: -100n, debit: 0n }),
+    ).toBe('income');
+    expect(
+      classifyExternalTransaction({ ...base, credit: 0n, debit: -100n }),
+    ).toBe('spend');
+    expect(
       classifyExternalTransaction({ ...base, creditAmd: 0n, debitAmd: 0n }),
     ).toBe('invalid');
     expect(classifyExternalTransaction({ ...base })).toBe('invalid');

@@ -32,10 +32,14 @@ export function convertAmdToUsdMinor(
   if (amdPerUsdMinorUnits <= 0n) {
     throw new Error('AMD to USD rate must be greater than zero');
   }
-  const numerator = amdMinorUnits * 100n;
+  const sign = amdMinorUnits < 0n ? -1n : 1n;
+  const numerator =
+    (amdMinorUnits < 0n ? -amdMinorUnits : amdMinorUnits) * 100n;
   const quotient = numerator / amdPerUsdMinorUnits;
   const remainder = numerator % amdPerUsdMinorUnits;
-  return remainder * 2n >= amdPerUsdMinorUnits ? quotient + 1n : quotient;
+  const rounded =
+    remainder * 2n >= amdPerUsdMinorUnits ? quotient + 1n : quotient;
+  return sign * rounded;
 }
 
 export function preferredAmount(
@@ -43,7 +47,7 @@ export function preferredAmount(
   secondary: bigint | undefined,
   fallback = 0n,
 ): bigint {
-  if (primary !== undefined && primary > 0n) return primary;
+  if (primary !== undefined && primary !== 0n) return primary;
   if (secondary !== undefined) return secondary;
   return fallback;
 }

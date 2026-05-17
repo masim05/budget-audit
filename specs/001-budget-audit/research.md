@@ -50,7 +50,7 @@
 
 ## Decision: Vitest coverage, ESLint, and Prettier for development quality
 
-**Rationale**: The constitution mandates 100% unit coverage. Vitest supports concise TypeScript unit and contract tests, V8 coverage enforces the branch coverage gate, ESLint catches code-quality issues, and Prettier keeps formatting predictable.
+**Rationale**: The project requires comprehensive unit coverage with a CI gate of at least 98%. Vitest supports concise TypeScript unit and contract tests, V8 coverage enforces the branch coverage gate, ESLint catches code-quality issues, and Prettier keeps formatting predictable.
 
 **Alternatives considered**:
 

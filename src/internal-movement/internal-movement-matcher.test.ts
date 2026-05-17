@@ -97,6 +97,27 @@ describe('internal movement matching', () => {
       findInternalMovements(originalAmdFallback, 'strict').matches[0]
         ?.usdAmount,
     ).toBe(0n);
+    const sameAccount = [
+      { ...tx('i', 'n6', 'in'), accountNumber: 'same-account' },
+      { ...tx('j', 'n6', 'out'), accountNumber: 'same-account' },
+    ];
+    expect(findInternalMovements(sameAccount, 'strict').matches).toHaveLength(
+      0,
+    );
+    const mismatchedAmounts = [
+      tx('k', 'n7', 'in'),
+      { ...tx('l', 'n7', 'out'), debit: 50n },
+    ];
+    expect(
+      findInternalMovements(mismatchedAmounts, 'strict').matches,
+    ).toHaveLength(0);
+    const unknownCurrency = [
+      { ...tx('m', 'n8', 'in'), currency: 'UNKNOWN' as const },
+      tx('n', 'n8', 'out'),
+    ];
+    expect(
+      findInternalMovements(unknownCurrency, 'strict').matches,
+    ).toHaveLength(0);
   });
 
   it('validates matching modes', () => {

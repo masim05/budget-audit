@@ -62,6 +62,9 @@ describe('CSV statement source', () => {
     await expect(
       new CsvStatementSource('/missing-folder').load(),
     ).rejects.toBeInstanceOf(InputFolderMissingError);
+    await expect(
+      new CsvStatementSource('/missing-folder').load(),
+    ).rejects.toThrow('Input folder is unavailable');
     const empty = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     await expect(new CsvStatementSource(empty).load()).rejects.toBeInstanceOf(
       NoStatementFilesError,
