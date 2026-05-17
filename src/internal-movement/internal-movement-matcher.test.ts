@@ -125,4 +125,34 @@ describe('internal movement matching', () => {
     expect(parseMatchingMode('permissive')).toBe('permissive');
     expect(() => parseMatchingMode('loose')).toThrow('Invalid matching mode');
   });
+
+  it('normalizes negative internal movement amounts for matching', () => {
+    const reversal = [
+      { ...tx('negative-in', 'n9', 'in'), credit: -100n, creditAmd: -40000n },
+      {
+        ...tx('negative-out', 'n9', 'out'),
+        debit: -100n,
+        debitAmd: -40000n,
+      },
+    ];
+    expect(
+      findInternalMovements(reversal, 'strict').matches[0]?.usdAmount,
+    ).toBe(100n);
+  });
+
+  it('keeps matched permissive groups stable when an extra unknown-currency row is present', () => {
+    const withUnknownExtra = [
+      tx('matched-in', 'n10', 'in'),
+      tx('matched-out', 'n10', 'out'),
+      {
+        ...tx('unknown-extra', 'n10', 'out'),
+        accountNumber: 'extra-account',
+        currency: 'UNKNOWN' as const,
+      },
+    ];
+    expect(
+      findInternalMovements(withUnknownExtra, 'permissive').matches[0]
+        ?.usdAmount,
+    ).toBe(100n);
+  });
 });
