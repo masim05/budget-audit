@@ -40,7 +40,16 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- Clean code teaching value: plan explains how the feature stays simple,
+  readable, cohesive, and free of avoidable duplication.
+- Unit coverage: plan identifies behavior-bearing modules and the test approach
+  required to preserve 100% unit coverage.
+- CLI-first scalability: plan defines the CLI contract and keeps core behavior
+  independent of CLI framework or presentation details.
+- Hexagonal boundaries: plan identifies core use cases, inbound adapters,
+  outbound ports, and outbound adapters when external interaction applies.
+- No MCP dependency: plan confirms development, tests, generated artifacts, and
+  runtime behavior do not require MCP servers, clients, protocols, or tooling.
 
 ## Project Structure
 
@@ -67,15 +76,16 @@ specs/[###-feature]/
 ```text
 # [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+├── core/               # Domain rules and use cases
+├── ports/              # Outbound port interfaces
+├── adapters/           # Inbound/outbound adapters at the edge
+├── cli/                # CLI adapter only
+└── lib/                # Shared implementation helpers, if justified
 
 tests/
+├── unit/
 ├── contract/
-├── integration/
-└── unit/
+└── integration/
 
 # [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
 backend/
@@ -108,6 +118,6 @@ directories captured above]
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
+| --------- | ---------- | ------------------------------------ |
 | [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
 | [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

@@ -9,7 +9,7 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: Unit tests are MANDATORY for all behavior-bearing code and MUST preserve 100% unit coverage. Contract and integration tests are included when required by the feature, CLI contract, or adapter boundary.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -22,6 +22,7 @@ description: "Task list template for feature implementation"
 ## Path Conventions
 
 - **Single project**: `src/`, `tests/` at repository root
+- **Hexagonal layout**: keep core behavior in `src/core/`, outbound ports in `src/ports/`, edge implementations in `src/adapters/`, and CLI wiring in `src/cli/`
 - **Web app**: `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
 - Paths shown below assume single project - adjust based on plan.md structure
@@ -49,9 +50,9 @@ description: "Task list template for feature implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan
+- [ ] T001 Create project structure per implementation plan, including core/ports/adapters/cli boundaries where applicable
 - [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T003 [P] Configure linting, formatting, and coverage tooling with 100% unit coverage enforcement
 
 ---
 
@@ -63,12 +64,12 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Define core use case boundaries in src/core/
+- [ ] T005 [P] Define outbound ports in src/ports/ for external dependencies
+- [ ] T006 [P] Create adapter scaffolding in src/adapters/ without coupling core behavior to infrastructure
+- [ ] T007 Create CLI adapter scaffold in src/cli/ with argument, output, diagnostic, and exit-code handling
+- [ ] T008 Configure error handling and logging infrastructure at adapter boundaries
+- [ ] T009 Verify no MCP dependency is introduced in development, tests, generated artifacts, or runtime code
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -80,19 +81,19 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 (MANDATORY)
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Unit test for [core behavior] in tests/unit/test_[name].py
+- [ ] T011 [P] [US1] CLI contract test for [command] in tests/contract/test_[name].py
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T012 [P] [US1] Create [Entity1] model in src/core/[entity1].py
+- [ ] T013 [P] [US1] Create [Entity2] model in src/core/[entity2].py
+- [ ] T014 [US1] Implement [use case] in src/core/[use_case].py (depends on T012, T013)
+- [ ] T015 [US1] Implement CLI adapter for [command] in src/cli/[command].py
 - [ ] T016 [US1] Add validation and error handling
 - [ ] T017 [US1] Add logging for user story 1 operations
 
@@ -106,16 +107,16 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 2 (MANDATORY)
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T018 [P] [US2] Unit test for [core behavior] in tests/unit/test_[name].py
+- [ ] T019 [P] [US2] Adapter or contract test for [boundary] in tests/contract/test_[name].py
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T020 [P] [US2] Create [Entity] model in src/core/[entity].py
+- [ ] T021 [US2] Implement [use case] in src/core/[use_case].py
+- [ ] T022 [US2] Implement adapter behavior in src/adapters/[adapter].py or src/cli/[command].py
 - [ ] T023 [US2] Integrate with User Story 1 components (if needed)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
@@ -128,16 +129,16 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 3 (MANDATORY)
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T024 [P] [US3] Unit test for [core behavior] in tests/unit/test_[name].py
+- [ ] T025 [P] [US3] Adapter or contract test for [boundary] in tests/contract/test_[name].py
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T026 [P] [US3] Create [Entity] model in src/core/[entity].py
+- [ ] T027 [US3] Implement [use case] in src/core/[use_case].py
+- [ ] T028 [US3] Implement adapter behavior in src/adapters/[adapter].py or src/cli/[command].py
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -154,7 +155,9 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX [P] Documentation updates in docs/
 - [ ] TXXX Code cleanup and refactoring
 - [ ] TXXX Performance optimization across all stories
-- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
+- [ ] TXXX [P] Additional unit tests in tests/unit/ to preserve 100% unit coverage
+- [ ] TXXX Run unit coverage verification and record 100% result
+- [ ] TXXX Audit generated code, tests, scripts, and docs for MCP dependencies
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
 
@@ -179,9 +182,10 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Within Each User Story
 
-- Tests (if included) MUST be written and FAIL before implementation
+- Unit tests MUST be written and FAIL before implementation
 - Models before services
-- Services before endpoints
+- Core use cases before adapters
+- Ports before outbound adapters
 - Core implementation before integration
 - Story complete before moving to next priority
 
@@ -199,9 +203,9 @@ Examples of foundational tasks (adjust based on your project):
 ## Parallel Example: User Story 1
 
 ```bash
-# Launch all tests for User Story 1 together (if tests requested):
-Task: "Contract test for [endpoint] in tests/contract/test_[name].py"
-Task: "Integration test for [user journey] in tests/integration/test_[name].py"
+# Launch all tests for User Story 1 together:
+Task: "Unit test for [core behavior] in tests/unit/test_[name].py"
+Task: "CLI contract test for [command] in tests/contract/test_[name].py"
 
 # Launch all models for User Story 1 together:
 Task: "Create [Entity1] model in src/models/[entity1].py"
@@ -246,6 +250,8 @@ With multiple developers:
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
+- Keep core behavior independent of CLI, web, persistence, and infrastructure concerns
+- Do not introduce MCP dependencies in development, tests, generated artifacts, or runtime code
 - Verify tests fail before implementing
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently

@@ -98,6 +98,14 @@
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
+### Quality & Architecture Requirements
+
+- **QA-001**: Application behavior MUST be independently unit-testable with 100% unit coverage.
+- **QA-002**: Core behavior MUST remain independent of CLI framework, terminal, web, persistence, and infrastructure concerns.
+- **QA-003**: Features with external interaction MUST identify the applicable inbound adapters, outbound ports, and outbound adapters.
+- **QA-004**: CLI behavior MUST define arguments, successful output, diagnostics, and exit codes.
+- **QA-005**: Development, tests, generated artifacts, and runtime behavior MUST NOT require MCP servers, clients, protocols, or tooling.
+
 ### Key Entities *(include if feature involves data)*
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
