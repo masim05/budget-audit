@@ -17,6 +17,7 @@ describe('money helpers', () => {
   it('converts AMD to USD using the local deterministic rate', () => {
     expect(convertAmdToUsdMinor(40000n)).toBe(100n);
     expect(convertAmdToUsdMinor(200n, 300n)).toBe(67n);
+    expect(convertAmdToUsdMinor(-200n, 300n)).toBe(-67n);
   });
 
   it('rejects invalid amounts and rates', () => {
@@ -24,8 +25,9 @@ describe('money helpers', () => {
     expect(() => convertAmdToUsdMinor(1n, 0n)).toThrow('greater than zero');
   });
 
-  it('selects positive primary amounts before fallbacks', () => {
+  it('selects non-zero primary amounts before fallbacks', () => {
     expect(preferredAmount(5n, 10n)).toBe(5n);
+    expect(preferredAmount(-5n, 10n)).toBe(-5n);
     expect(preferredAmount(0n, 10n)).toBe(10n);
     expect(preferredAmount(undefined, 10n)).toBe(10n);
     expect(preferredAmount(undefined, undefined, 7n)).toBe(7n);

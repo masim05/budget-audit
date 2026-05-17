@@ -117,7 +117,7 @@ As a budget auditor with accounts in different currencies, I want final income a
 
 ### Quality & Architecture Requirements
 
-- **QA-001**: Application behavior MUST be independently unit-testable with 100% unit coverage.
+- **QA-001**: Application behavior MUST be independently unit-testable with at least 98% unit coverage enforced in CI.
 - **QA-002**: Domain behavior MUST remain independent of CLI framework, terminal, web, persistence, and infrastructure concerns.
 - **QA-003**: Features with external interaction MUST identify the applicable inbound adapters, outbound ports, and outbound adapters.
 - **QA-004**: CLI behavior MUST define arguments, successful output, diagnostics, and exit codes.

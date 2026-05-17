@@ -68,7 +68,11 @@ describe('audit service', () => {
       matchingMode: 'strict',
       statementSource: source([
         tx('same', 100n, 0n),
-        { ...tx('same2', 0n, 100n), transactionNumber: 'same' },
+        {
+          ...tx('same2', 0n, 100n),
+          transactionNumber: 'same',
+          accountNumber: 'ACC2',
+        },
         { ...tx('bad', 0n, 0n), creditAmd: 0n, debitAmd: 0n },
       ]),
     });
@@ -100,5 +104,21 @@ describe('audit service', () => {
       ]),
     });
     expect(report.totals).toEqual({ incomeUsd: 200n, spendUsd: 300n });
+  });
+
+  it('excludes unknown currency transactions from totals with warnings', async () => {
+    const report = await runAudit({
+      dataDir: './data',
+      dateRange: { from: '2026-05-01', to: '2026-05-31' },
+      matchingMode: 'strict',
+      statementSource: source([
+        { ...tx('unknown-income', 40000n, 0n), currency: 'UNKNOWN' },
+        { ...tx('known-spend', 0n, 125n), currency: 'USD' },
+      ]),
+    });
+    expect(report.totals).toEqual({ incomeUsd: 0n, spendUsd: 125n });
+    expect(report.warnings).toContain(
+      'Unsupported currency for transaction unknown-income; excluded from totals',
+    );
   });
 });

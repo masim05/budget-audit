@@ -27,12 +27,21 @@ export function findInternalMovements(
 
   for (const [key, group] of groups) {
     const incoming = group.filter(
-      (transaction) => (transaction.credit ?? 0n) > 0n,
+      (transaction) => (transaction.credit ?? 0n) !== 0n,
     );
     const outgoing = group.filter(
-      (transaction) => (transaction.debit ?? 0n) > 0n,
+      (transaction) => (transaction.debit ?? 0n) !== 0n,
     );
     if (incoming.length === 0 || outgoing.length === 0) continue;
+    if (
+      !hasDistinctAccounts(group) ||
+      !hasMatchingAmounts(incoming, outgoing)
+    ) {
+      warnings.push(
+        `Internal movement candidate ${key} was included in totals because accounts or amounts did not match`,
+      );
+      continue;
+    }
     const confidence =
       incoming.length === 1 && outgoing.length === 1 ? 'high' : 'probable';
     if (confidence === 'probable' && matchingMode === 'strict') {
@@ -47,14 +56,7 @@ export function findInternalMovements(
         : 'transfer';
     for (const transaction of group) excludedTransactionIds.add(transaction.id);
     const amount = group.reduce((largest, transaction) => {
-      const original = preferredAmount(transaction.credit, transaction.debit);
-      const normalizedAmd = preferredAmount(
-        transaction.creditAmd,
-        transaction.debitAmd,
-      );
-      const amd = normalizedAmd > 0n ? normalizedAmd : original;
-      const usd =
-        transaction.currency === 'USD' ? original : convertAmdToUsdMinor(amd);
+      const usd = matchingUsdAmount(transaction) ?? 0n;
       return usd > largest ? usd : largest;
     }, 0n);
     matches.push({
@@ -71,4 +73,36 @@ export function findInternalMovements(
   }
 
   return { matches, excludedTransactionIds, warnings };
+}
+
+function hasDistinctAccounts(group: Transaction[]): boolean {
+  return (
+    new Set(group.map((transaction) => transaction.accountNumber)).size > 1
+  );
+}
+
+function hasMatchingAmounts(
+  incoming: Transaction[],
+  outgoing: Transaction[],
+): boolean {
+  return incoming.some((incomingTransaction) =>
+    outgoing.some((outgoingTransaction) => {
+      const incomingAmount = matchingUsdAmount(incomingTransaction);
+      const outgoingAmount = matchingUsdAmount(outgoingTransaction);
+      return incomingAmount !== undefined && incomingAmount === outgoingAmount;
+    }),
+  );
+}
+
+function matchingUsdAmount(transaction: Transaction): bigint | undefined {
+  const original = preferredAmount(transaction.credit, transaction.debit);
+  const normalizedAmd = preferredAmount(
+    transaction.creditAmd,
+    transaction.debitAmd,
+  );
+  const amd = normalizedAmd !== 0n ? normalizedAmd : original;
+  if (transaction.currency === 'UNKNOWN') return undefined;
+  const amount =
+    transaction.currency === 'USD' ? original : convertAmdToUsdMinor(amd);
+  return amount < 0n ? -amount : amount;
 }

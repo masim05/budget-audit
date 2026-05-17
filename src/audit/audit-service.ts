@@ -40,10 +40,18 @@ export async function runAudit(
   for (const transaction of transactions) {
     if (movementResult.excludedTransactionIds.has(transaction.id)) continue;
     transaction.classification = classifyExternalTransaction(transaction);
-    if (transaction.classification === 'income')
-      incomeUsd += transactionUsdAmount(transaction);
-    if (transaction.classification === 'spend')
-      spendUsd += transactionUsdAmount(transaction);
+    if (transaction.classification === 'income') {
+      const amount = transactionUsdAmount(transaction);
+      if (amount === undefined)
+        warnings.push(unsupportedCurrencyWarning(transaction));
+      else incomeUsd += amount;
+    }
+    if (transaction.classification === 'spend') {
+      const amount = transactionUsdAmount(transaction);
+      if (amount === undefined)
+        warnings.push(unsupportedCurrencyWarning(transaction));
+      else spendUsd += amount;
+    }
     if (transaction.classification === 'invalid')
       warnings.push(`Invalid transaction ${transaction.transactionNumber}`);
   }
@@ -67,13 +75,18 @@ export async function runAudit(
   };
 }
 
-function transactionUsdAmount(transaction: Transaction): bigint {
+function transactionUsdAmount(transaction: Transaction): bigint | undefined {
   const original = preferredAmount(transaction.credit, transaction.debit);
   if (transaction.currency === 'USD') return original;
+  if (transaction.currency === 'UNKNOWN') return undefined;
   const normalizedAmd = preferredAmount(
     transaction.creditAmd,
     transaction.debitAmd,
   );
-  const amd = normalizedAmd > 0n ? normalizedAmd : original;
+  const amd = normalizedAmd !== 0n ? normalizedAmd : original;
   return convertAmdToUsdMinor(amd);
+}
+
+function unsupportedCurrencyWarning(transaction: Transaction): string {
+  return `Unsupported currency for transaction ${transaction.transactionNumber}; excluded from totals`;
 }

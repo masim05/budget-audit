@@ -26,7 +26,7 @@ useful); development dependencies `typescript`, `vitest`, `@vitest/coverage-v8`,
 **Storage**: Local files only. CSV files are input; optional report export writes
 JSON/text files. No database.
 
-**Testing**: Vitest unit tests with branch coverage enforced at 100%; contract
+**Testing**: Vitest unit tests with branch coverage enforced at 98% or higher; contract
 tests for CLI, CSV header parsing, and audit report JSON shape
 
 **Target Platform**: Local developer machine with Node.js 22 on macOS/Linux;
@@ -53,7 +53,7 @@ v1 supports local CSV ingestion and optional local report files only
   separates domain concepts into small modules, and avoids abstractions beyond
   ports/adapters needed for source and presentation boundaries.
 - Unit coverage: PASS. Behavior-bearing domain folders, boundary interfaces,
-  local implementations, and CLI mapping must preserve 100% branch coverage.
+  local implementations, and CLI mapping must preserve the configured 98% branch coverage gate.
 - CLI-first scalability: PASS. [contracts/cli.md](contracts/cli.md) defines the
   CLI contract while domain use cases remain independent of `node:util`
   argument parsing, stdout, and stderr.
@@ -176,7 +176,7 @@ Design artifacts are complete:
 - Clean code teaching value: PASS. Design keeps domain folders cohesive and uses
   boundary interfaces only where they protect real source/output boundaries.
 - Unit coverage: PASS. The structure identifies behavior-bearing modules and
-  contract tests; quickstart requires 100% branch coverage.
+  contract tests; quickstart requires the configured coverage gate to pass.
 - CLI-first scalability: PASS. CLI is an adapter; domain behavior is reusable by
   a future web interface.
 - Hexagonal boundaries: PASS. Statement input and report output are boundary

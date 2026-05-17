@@ -3,10 +3,10 @@ import type { Transaction, TransactionClassification } from './transaction.js';
 export function classifyExternalTransaction(
   transaction: Transaction,
 ): TransactionClassification {
-  if ((transaction.credit ?? 0n) > 0n && (transaction.debit ?? 0n) === 0n)
-    return 'income';
-  if ((transaction.debit ?? 0n) > 0n && (transaction.credit ?? 0n) === 0n)
-    return 'spend';
+  const hasCredit = (transaction.credit ?? 0n) !== 0n;
+  const hasDebit = (transaction.debit ?? 0n) !== 0n;
+  if (hasCredit && !hasDebit) return 'income';
+  if (hasDebit && !hasCredit) return 'spend';
   if (
     (transaction.creditAmd ?? 0n) === 0n &&
     (transaction.debitAmd ?? 0n) === 0n

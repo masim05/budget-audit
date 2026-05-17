@@ -34,9 +34,10 @@ export class CsvStatementSource implements StatementSource {
     let entries: string[];
     try {
       entries = await readdir(this.folderPath);
-    } catch {
+    } catch (error) {
+      const detail = error instanceof Error ? ` (${error.message})` : '';
       throw new InputFolderMissingError(
-        `Input folder does not exist: ${this.folderPath}`,
+        `Input folder is unavailable: ${this.folderPath}${detail}`,
       );
     }
 
