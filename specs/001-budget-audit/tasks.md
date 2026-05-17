@@ -18,10 +18,10 @@
 
 **Purpose**: Establish the Node.js/TypeScript project, package layout, and test/tooling scaffolding.
 
-- [ ] T001 Create Node.js project configuration with package metadata, `budget-audit` bin entry, TypeScript settings, Vitest coverage settings, ESLint settings, and Prettier settings in package.json, tsconfig.json, eslint.config.js, and prettier.config.js
-- [ ] T002 Create TypeScript source entry points in src/index.ts, src/audit/index.ts, src/statement/index.ts, src/transaction/index.ts, src/internal-movement/index.ts, src/report/index.ts, src/shared/index.ts, and src/cli/index.ts
-- [ ] T003 [P] Create domain folder scaffolds with colocated test files and shared test setup in src/audit/, src/statement/, src/transaction/, src/internal-movement/, src/report/, src/shared/, src/cli/, and tests/fixtures/
-- [ ] T004 [P] Document fixture conventions and the required CSV header in tests/fixtures/statements/README.md
+- [X] T001 Create Node.js project configuration with package metadata, `budget-audit` bin entry, TypeScript settings, Vitest coverage settings, ESLint settings, and Prettier settings in package.json, tsconfig.json, eslint.config.js, and prettier.config.js
+- [X] T002 Create TypeScript source entry points in src/index.ts, src/audit/index.ts, src/statement/index.ts, src/transaction/index.ts, src/internal-movement/index.ts, src/report/index.ts, src/shared/index.ts, and src/cli/index.ts
+- [X] T003 [P] Create domain folder scaffolds with colocated test files and shared test setup in src/audit/, src/statement/, src/transaction/, src/internal-movement/, src/report/, src/shared/, src/cli/, and tests/fixtures/
+- [X] T004 [P] Document fixture conventions and the required CSV header in tests/fixtures/statements/README.md
 
 ---
 
@@ -31,20 +31,20 @@
 
 **Critical**: No user story work can begin until this phase is complete.
 
-- [ ] T005 [P] Implement domain entities and enums for StatementFile, Account, Transaction, MatchingMode, AuditRun, AuditReport, and warning records across src/statement/statement-file.ts, src/transaction/transaction.ts, src/internal-movement/matching-mode.ts, src/audit/audit-run.ts, and src/audit/audit-report.ts
-- [ ] T006 [P] Implement exact minor-unit money parsing and USD formatting helpers in src/shared/money.ts
-- [ ] T007 [P] Implement date parsing, inclusive range validation, and previous-full-calendar-month calculation in src/shared/date-range.ts
-- [ ] T008 [P] Define the statement source boundary interface and public exports in src/statement/index.ts
-- [ ] T009 [P] Define the report writer boundary interface and public exports in src/report/index.ts
-- [ ] T010 Create audit orchestration use-case skeleton in src/audit/audit-service.ts
-- [ ] T011 Create transaction classification skeleton in src/transaction/classification.ts
-- [ ] T012 Create internal movement matching skeleton in src/internal-movement/internal-movement-matcher.ts
-- [ ] T013 Create CSV statement source implementation skeleton in src/statement/csv-statement-source.ts
-- [ ] T014 Create JSON report writer skeleton in src/report/json-report-writer.ts
-- [ ] T015 Create text report writer skeleton in src/report/text-report-writer.ts
-- [ ] T016 Create CLI argument parsing and application entry scaffold in src/cli/main.ts
-- [ ] T017 Create CLI output and error mapping scaffold in src/cli/output.ts
-- [ ] T018 [P] Add no-MCP/no-database dependency audit test in src/shared/project-constraints.test.ts
+- [X] T005 [P] Implement domain entities and enums for StatementFile, Account, Transaction, MatchingMode, AuditRun, AuditReport, and warning records across src/statement/statement-file.ts, src/transaction/transaction.ts, src/internal-movement/matching-mode.ts, src/audit/audit-run.ts, and src/audit/audit-report.ts
+- [X] T006 [P] Implement exact minor-unit money parsing and USD formatting helpers in src/shared/money.ts
+- [X] T007 [P] Implement date parsing, inclusive range validation, and previous-full-calendar-month calculation in src/shared/date-range.ts
+- [X] T008 [P] Define the statement source boundary interface and public exports in src/statement/index.ts
+- [X] T009 [P] Define the report writer boundary interface and public exports in src/report/index.ts
+- [X] T010 Create audit orchestration use-case skeleton in src/audit/audit-service.ts
+- [X] T011 Create transaction classification skeleton in src/transaction/classification.ts
+- [X] T012 Create internal movement matching skeleton in src/internal-movement/internal-movement-matcher.ts
+- [X] T013 Create CSV statement source implementation skeleton in src/statement/csv-statement-source.ts
+- [X] T014 Create JSON report writer skeleton in src/report/json-report-writer.ts
+- [X] T015 Create text report writer skeleton in src/report/text-report-writer.ts
+- [X] T016 Create CLI argument parsing and application entry scaffold in src/cli/main.ts
+- [X] T017 Create CLI output and error mapping scaffold in src/cli/output.ts
+- [X] T018 [P] Add no-MCP/no-database dependency audit test in src/shared/project-constraints.test.ts
 
 **Checkpoint**: Domain boundaries, exported interfaces, and local implementation scaffolds exist and user story work can begin.
 
@@ -58,22 +58,22 @@
 
 ### Tests for User Story 1 (Mandatory)
 
-- [ ] T019 [P] [US1] Add unit tests for previous-full-calendar-month and inclusive date filtering in src/shared/date-range.test.ts
-- [ ] T020 [P] [US1] Add unit tests for minor-unit amount parsing, zero handling, and USD formatting in src/shared/money.test.ts
-- [ ] T021 [P] [US1] Add CSV statement contract tests for exact header validation, row parsing, missing folder, empty folder, and unreadable file behavior in src/statement/csv-statement-source.contract.test.ts
-- [ ] T022 [P] [US1] Add CLI contract tests for default options, stdout summary fields, stderr diagnostics, and exit codes 0, 2, and 3 in src/cli/cli.contract.test.ts
-- [ ] T023 [P] [US1] Add integration test for default audit over fixture statements in src/cli/budget-audit-cli-flow.test.ts
+- [X] T019 [P] [US1] Add unit tests for previous-full-calendar-month and inclusive date filtering in src/shared/date-range.test.ts
+- [X] T020 [P] [US1] Add unit tests for minor-unit amount parsing, zero handling, and USD formatting in src/shared/money.test.ts
+- [X] T021 [P] [US1] Add CSV statement contract tests for exact header validation, row parsing, missing folder, empty folder, and unreadable file behavior in src/statement/csv-statement-source.contract.test.ts
+- [X] T022 [P] [US1] Add CLI contract tests for default options, stdout summary fields, stderr diagnostics, and exit codes 0, 2, and 3 in src/cli/cli.contract.test.ts
+- [X] T023 [P] [US1] Add integration test for default audit over fixture statements in src/cli/budget-audit-cli-flow.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T024 [US1] Implement previous-full-calendar-month and custom inclusive range helpers in src/shared/date-range.ts
-- [ ] T025 [US1] Implement minor-unit amount parsing and USD money formatting in src/shared/money.ts
-- [ ] T026 [US1] Implement CSV file discovery, exact header validation, row normalization, and file warnings in src/statement/csv-statement-source.ts
-- [ ] T027 [US1] Implement baseline income/spend classification from Credit and Debit fields in src/transaction/classification.ts
-- [ ] T028 [US1] Implement audit orchestration for loading statements, filtering by default date range, classifying external transactions, and collecting warnings in src/audit/audit-service.ts
-- [ ] T029 [US1] Implement default text report rendering for audited folder, date range, matching mode, totals, file summary, and warnings in src/report/text-report-writer.ts
-- [ ] T030 [US1] Implement `budget-audit audit` default command wiring, stdout, stderr, and exit code mapping in src/cli/main.ts and src/cli/output.ts
-- [ ] T031 [US1] Add default-month CSV fixtures with expected totals in tests/fixtures/statements/default-month/expected.json
+- [X] T024 [US1] Implement previous-full-calendar-month and custom inclusive range helpers in src/shared/date-range.ts
+- [X] T025 [US1] Implement minor-unit amount parsing and USD money formatting in src/shared/money.ts
+- [X] T026 [US1] Implement CSV file discovery, exact header validation, row normalization, and file warnings in src/statement/csv-statement-source.ts
+- [X] T027 [US1] Implement baseline income/spend classification from Credit and Debit fields in src/transaction/classification.ts
+- [X] T028 [US1] Implement audit orchestration for loading statements, filtering by default date range, classifying external transactions, and collecting warnings in src/audit/audit-service.ts
+- [X] T029 [US1] Implement default text report rendering for audited folder, date range, matching mode, totals, file summary, and warnings in src/report/text-report-writer.ts
+- [X] T030 [US1] Implement `budget-audit audit` default command wiring, stdout, stderr, and exit code mapping in src/cli/main.ts and src/cli/output.ts
+- [X] T031 [US1] Add default-month CSV fixtures with expected totals in tests/fixtures/statements/default-month/expected.json
 
 **Checkpoint**: User Story 1 is independently runnable and testable as the MVP.
 
@@ -87,16 +87,16 @@
 
 ### Tests for User Story 2 (Mandatory)
 
-- [ ] T032 [P] [US2] Add unit tests for invalid date ranges, boundary inclusion, and empty matching ranges in src/shared/date-range.test.ts
-- [ ] T033 [P] [US2] Add CLI contract tests for `--data-dir`, `--from`, `--to`, invalid dates, and exit code 1 in src/cli/cli.contract.test.ts
-- [ ] T034 [P] [US2] Add integration test for custom folder and custom date range audit in src/cli/budget-audit-cli-flow.test.ts
+- [X] T032 [P] [US2] Add unit tests for invalid date ranges, boundary inclusion, and empty matching ranges in src/shared/date-range.test.ts
+- [X] T033 [P] [US2] Add CLI contract tests for `--data-dir`, `--from`, `--to`, invalid dates, and exit code 1 in src/cli/cli.contract.test.ts
+- [X] T034 [P] [US2] Add integration test for custom folder and custom date range audit in src/cli/budget-audit-cli-flow.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T035 [US2] Extend CLI parsing for `--data-dir`, `--from`, and `--to` validation in src/cli/main.ts
-- [ ] T036 [US2] Extend audit orchestration to accept explicit folder and date range inputs in src/audit/audit-service.ts
-- [ ] T037 [US2] Add custom-range CSV fixtures and expected outputs in tests/fixtures/statements/custom-range/expected.json
-- [ ] T038 [US2] Update text report rendering for zero-transaction ranges in src/report/text-report-writer.ts
+- [X] T035 [US2] Extend CLI parsing for `--data-dir`, `--from`, and `--to` validation in src/cli/main.ts
+- [X] T036 [US2] Extend audit orchestration to accept explicit folder and date range inputs in src/audit/audit-service.ts
+- [X] T037 [US2] Add custom-range CSV fixtures and expected outputs in tests/fixtures/statements/custom-range/expected.json
+- [X] T038 [US2] Update text report rendering for zero-transaction ranges in src/report/text-report-writer.ts
 
 **Checkpoint**: User Stories 1 and 2 work independently through CLI defaults and explicit inputs.
 
@@ -110,22 +110,22 @@
 
 ### Tests for User Story 3 (Mandatory)
 
-- [ ] T039 [P] [US3] Add unit tests for high-confidence same-currency transfer matching in src/internal-movement/internal-movement-matcher.test.ts
-- [ ] T040 [P] [US3] Add unit tests for internal currency conversion matching using AMD-normalized evidence in src/internal-movement/internal-movement-matcher.test.ts
-- [ ] T041 [P] [US3] Add unit tests for strict versus permissive ambiguous candidate handling in src/internal-movement/internal-movement-matcher.test.ts
-- [ ] T042 [P] [US3] Add CLI contract tests for `--matching-mode strict`, `--matching-mode permissive`, invalid matching mode, and warning output in src/cli/cli.contract.test.ts
-- [ ] T043 [P] [US3] Add integration test for transfer/conversion exclusion in strict and permissive modes in src/cli/budget-audit-cli-flow.test.ts
+- [X] T039 [P] [US3] Add unit tests for high-confidence same-currency transfer matching in src/internal-movement/internal-movement-matcher.test.ts
+- [X] T040 [P] [US3] Add unit tests for internal currency conversion matching using AMD-normalized evidence in src/internal-movement/internal-movement-matcher.test.ts
+- [X] T041 [P] [US3] Add unit tests for strict versus permissive ambiguous candidate handling in src/internal-movement/internal-movement-matcher.test.ts
+- [X] T042 [P] [US3] Add CLI contract tests for `--matching-mode strict`, `--matching-mode permissive`, invalid matching mode, and warning output in src/cli/cli.contract.test.ts
+- [X] T043 [P] [US3] Add integration test for transfer/conversion exclusion in strict and permissive modes in src/cli/budget-audit-cli-flow.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T044 [US3] Implement MatchingMode validation and default strict behavior in src/internal-movement/matching-mode.ts
-- [ ] T045 [US3] Implement high-confidence same-currency transfer matching in src/internal-movement/internal-movement-matcher.ts
-- [ ] T046 [US3] Implement internal currency conversion matching with AMD-normalized evidence in src/internal-movement/internal-movement-matcher.ts
-- [ ] T047 [US3] Implement strict and permissive ambiguity handling with warnings in src/internal-movement/internal-movement-matcher.ts
-- [ ] T048 [US3] Integrate internal match exclusion into audit totals and warnings in src/audit/audit-service.ts
-- [ ] T049 [US3] Add `--matching-mode` CLI option mapping to MatchingMode in src/cli/main.ts
-- [ ] T050 [US3] Update text report to include excluded transfer and conversion counts plus ambiguity warnings in src/report/text-report-writer.ts
-- [ ] T051 [US3] Add transfer and conversion fixture statements with expected outputs in tests/fixtures/statements/internal-matches/expected.json
+- [X] T044 [US3] Implement MatchingMode validation and default strict behavior in src/internal-movement/matching-mode.ts
+- [X] T045 [US3] Implement high-confidence same-currency transfer matching in src/internal-movement/internal-movement-matcher.ts
+- [X] T046 [US3] Implement internal currency conversion matching with AMD-normalized evidence in src/internal-movement/internal-movement-matcher.ts
+- [X] T047 [US3] Implement strict and permissive ambiguity handling with warnings in src/internal-movement/internal-movement-matcher.ts
+- [X] T048 [US3] Integrate internal match exclusion into audit totals and warnings in src/audit/audit-service.ts
+- [X] T049 [US3] Add `--matching-mode` CLI option mapping to MatchingMode in src/cli/main.ts
+- [X] T050 [US3] Update text report to include excluded transfer and conversion counts plus ambiguity warnings in src/report/text-report-writer.ts
+- [X] T051 [US3] Add transfer and conversion fixture statements with expected outputs in tests/fixtures/statements/internal-matches/expected.json
 
 **Checkpoint**: User Stories 1, 2, and 3 work independently, and internal movements do not affect final totals.
 
@@ -139,18 +139,18 @@
 
 ### Tests for User Story 4 (Mandatory)
 
-- [ ] T052 [P] [US4] Add unit tests for USD total aggregation from AMD-normalized credit and debit fields in src/audit/audit-service.test.ts
-- [ ] T053 [P] [US4] Add audit report JSON contract tests for totals, processed files, exclusions, and warnings in src/report/audit-report.contract.test.ts
-- [ ] T054 [P] [US4] Add CLI contract tests for `--format json`, `--output`, and text-vs-json output behavior in src/cli/cli.contract.test.ts
-- [ ] T055 [P] [US4] Add integration test for multi-currency USD report output in src/cli/budget-audit-cli-flow.test.ts
+- [X] T052 [P] [US4] Add unit tests for USD total aggregation from AMD-normalized credit and debit fields in src/audit/audit-service.test.ts
+- [X] T053 [P] [US4] Add audit report JSON contract tests for totals, processed files, exclusions, and warnings in src/report/audit-report.contract.test.ts
+- [X] T054 [P] [US4] Add CLI contract tests for `--format json`, `--output`, and text-vs-json output behavior in src/cli/cli.contract.test.ts
+- [X] T055 [P] [US4] Add integration test for multi-currency USD report output in src/cli/budget-audit-cli-flow.test.ts
 
 ### Implementation for User Story 4
 
-- [ ] T056 [US4] Implement USD income and spend aggregation in src/audit/audit-service.ts
-- [ ] T057 [US4] Implement JSON report writer matching contracts/audit-report.md in src/report/json-report-writer.ts
-- [ ] T058 [US4] Update text report writer to match contracts/audit-report.md text requirements in src/report/text-report-writer.ts
-- [ ] T059 [US4] Implement `--format` and `--output` CLI behavior with local file writing only in src/cli/main.ts
-- [ ] T060 [US4] Add multi-currency USD fixture statements and expected report in tests/fixtures/statements/usd-report/expected.json
+- [X] T056 [US4] Implement USD income and spend aggregation in src/audit/audit-service.ts
+- [X] T057 [US4] Implement JSON report writer matching contracts/audit-report.md in src/report/json-report-writer.ts
+- [X] T058 [US4] Update text report writer to match contracts/audit-report.md text requirements in src/report/text-report-writer.ts
+- [X] T059 [US4] Implement `--format` and `--output` CLI behavior with local file writing only in src/cli/main.ts
+- [X] T060 [US4] Add multi-currency USD fixture statements and expected report in tests/fixtures/statements/usd-report/expected.json
 
 **Checkpoint**: All user stories are independently functional and produce USD audit reports.
 
@@ -160,14 +160,14 @@
 
 **Purpose**: Final validation, documentation, and quality gates across all stories.
 
-- [ ] T061 [P] Update README usage, CSV header, matching-mode explanation, no-DB note, and future adapter boundary in README.md
-- [ ] T062 [P] Add packaged sample service-file report examples in examples/reports/README.md
-- [ ] T063 Run ESLint validation for all source and tests using eslint.config.js
-- [ ] T064 Run Prettier format validation for all source and tests using prettier.config.js
-- [ ] T065 Run Vitest with 100% branch coverage gate for src/ using package.json
-- [ ] T066 Run quickstart validation commands from specs/001-budget-audit/quickstart.md
-- [ ] T067 Audit source, tests, generated artifacts, and documentation for forbidden MCP and database dependencies in specs/001-budget-audit/plan.md
-- [ ] T068 Review code against clean-code and hexagonal boundary rules in .specify/memory/constitution.md
+- [X] T061 [P] Update README usage, CSV header, matching-mode explanation, no-DB note, and future adapter boundary in README.md
+- [X] T062 [P] Add packaged sample service-file report examples in examples/reports/README.md
+- [X] T063 Run ESLint validation for all source and tests using eslint.config.js
+- [X] T064 Run Prettier format validation for all source and tests using prettier.config.js
+- [X] T065 Run Vitest with 100% branch coverage gate for src/ using package.json
+- [X] T066 Run quickstart validation commands from specs/001-budget-audit/quickstart.md
+- [X] T067 Audit source, tests, generated artifacts, and documentation for forbidden MCP and database dependencies in specs/001-budget-audit/plan.md
+- [X] T068 Review code against clean-code and hexagonal boundary rules in .specify/memory/constitution.md
 
 ---
 
