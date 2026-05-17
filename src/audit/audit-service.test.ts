@@ -121,4 +121,20 @@ describe('audit service', () => {
       'Unsupported currency for transaction unknown-income; excluded from totals',
     );
   });
+
+  it('excludes unknown currency spend transactions from totals with warnings', async () => {
+    const report = await runAudit({
+      dataDir: './data',
+      dateRange: { from: '2026-05-01', to: '2026-05-31' },
+      matchingMode: 'strict',
+      statementSource: source([
+        { ...tx('known-income', 500n, 0n), currency: 'USD' },
+        { ...tx('unknown-spend', 0n, 40000n), currency: 'UNKNOWN' },
+      ]),
+    });
+    expect(report.totals).toEqual({ incomeUsd: 500n, spendUsd: 0n });
+    expect(report.warnings).toContain(
+      'Unsupported currency for transaction unknown-spend; excluded from totals',
+    );
+  });
 });
