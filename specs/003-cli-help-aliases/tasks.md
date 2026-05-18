@@ -109,7 +109,7 @@
 - [x] T023 Run `npm run lint` and fix lint issues in src/cli/main.ts, src/cli/cli-help.contract.test.ts, src/cli/cli-date-aliases.contract.test.ts, and src/cli/cli-output-alias.contract.test.ts
 - [X] T024 Run `npm run format:check` and format touched files if needed in src/cli/main.ts, src/cli/cli-help.contract.test.ts, src/cli/cli-date-aliases.contract.test.ts, src/cli/cli-output-alias.contract.test.ts, README.md, and specs/003-cli-help-aliases/tasks.md
 - [X] T025 Run `npm run test:coverage` and preserve 100% application code coverage for src/cli/main.ts
-- [X] T026 Run quickstart smoke checks for `npm run audit -- -h`, `npm run audit -- --help`, `npm run audit -- -f 2026-05-01 -t 2026-05-31`, and `npm run audit -- -f 2026-05-01 -t 2026-05-31 -o reports/audit.txt` from specs/003-cli-help-aliases/quickstart.md
+- [X] T026 Run quickstart smoke checks for `npm run audit -- -h`, `npm run audit -- --help`, `npm run audit -- --data-dir examples/statements -f 2026-05-01 -t 2026-05-31`, and `npm run audit -- --data-dir examples/statements -f 2026-05-01 -t 2026-05-31 -o reports/audit.txt` from specs/003-cli-help-aliases/quickstart.md
 - [X] T027 Audit generated code, tests, scripts, and docs for accidental MCP dependency mentions in src/cli/main.ts, src/cli/cli-help.contract.test.ts, src/cli/cli-date-aliases.contract.test.ts, src/cli/cli-output-alias.contract.test.ts, README.md, and specs/003-cli-help-aliases/tasks.md
 - [X] T028 Commit the completed implementation and task/spec artifacts with git after local validation passes
 - [X] T029 Push branch 003-cli-help-aliases to the configured remote and verify remote CI checks pass
