@@ -1,0 +1,2 @@
+Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+15/05/2026,Transfer,USD-001,ACC-USD-1001,"1,000.00",0.00,"400,000.00",0.00,Employer,Salary,Incoming

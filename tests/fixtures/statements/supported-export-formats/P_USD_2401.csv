@@ -1,0 +1,2 @@
+Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+16/05/2026,Card,USD-2401,ACC-USD-2401,0.00,25.00,0.00,"10,000.00","ACME, Inc.","Invoice, May",Outgoing

@@ -1,0 +1,2 @@
+Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+20/05/2026,Card,USD-8001,ACC-USD-8001,0.00,12.50,0.00,"5,000.00",Market,Weekend purchase,Outgoing

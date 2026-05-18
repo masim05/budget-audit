@@ -1,0 +1,2 @@
+Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+15/05/2026,Transfer,AMD-001,ACC-AMD-5600,0.00,"40,000.00",0.00,"40,000.00",Shop,Groceries,Outgoing

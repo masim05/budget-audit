@@ -1,0 +1,2 @@
+Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+17/05/2026,Transfer,USD-3601,ACC-USD-3601,50.00,0.00,"20,000.00",0.00,Client,"Said ""hello""",Incoming

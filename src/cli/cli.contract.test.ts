@@ -129,4 +129,29 @@ describe('CLI contract', () => {
       }),
     ).toBe(1);
   });
+  it('maps unexpected non-error failures to the fallback exit code', async () => {
+    const folder = await fixtureFolder();
+    let stderr = '';
+    const code = await runCli(
+      [
+        'audit',
+        '--data-dir',
+        folder,
+        '--from',
+        '2026-05-01',
+        '--to',
+        '2026-05-31',
+      ],
+      process.cwd(),
+      {
+        stdout: () => {
+          throw 'stdout failed';
+        },
+        stderr: (value) => (stderr += value),
+      },
+    );
+
+    expect(code).toBe(4);
+    expect(stderr).toBe('stdout failed\n');
+  });
 });

@@ -1,0 +1,2 @@
+Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+18/05/2026,Card,USD-5901,ACC-USD-5901,0.00,9.99,0.00,"3,996.00",Cafe,Repeated   spaces,Outgoing
