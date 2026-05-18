@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -61,6 +61,42 @@ describe('CLI contract', () => {
     );
     expect(jsonCode).toBe(0);
     expect(JSON.parse(json).totals.income_usd).toBe('10.00');
+  });
+
+  it('resolves relative data and output paths from the provided cwd', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'budget-audit-'));
+    const dataFolder = join(cwd, 'statements');
+    await mkdir(dataFolder);
+    await writeFile(
+      join(dataFolder, 'IE_USD_1001.csv'),
+      `${header}\n15/05/2026,Transfer,001,ACC,10.00,0.00,"4,000.00",0.00,Employer,Salary,Incoming\n`,
+      'utf8',
+    );
+    const code = await runCli(
+      [
+        'audit',
+        '--data-dir',
+        'statements',
+        '--from',
+        '2026-05-01',
+        '--to',
+        '2026-05-31',
+        '--format',
+        'json',
+        '--output',
+        'reports/audit.json',
+      ],
+      cwd,
+      {
+        stdout: () => undefined,
+        stderr: () => undefined,
+      },
+    );
+    expect(code).toBe(0);
+    const report = JSON.parse(
+      await readFile(join(cwd, 'reports/audit.json'), 'utf8'),
+    );
+    expect(report.audited_folder).toBe(dataFolder);
   });
 
   it('maps invalid arguments and input failures to documented exit codes', async () => {

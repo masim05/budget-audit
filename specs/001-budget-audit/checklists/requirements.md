@@ -33,4 +33,4 @@
 
 - Validation passed on 2026-05-17.
 - CLI and no-MCP constraints appear only as project constitution requirements and product/development constraints, not as implementation technology choices.
-- Multi-currency totals are scoped to per-currency reporting; single reporting-currency conversion is explicitly deferred until a currency and exchange-rate source are specified.
+- Final income and spend totals are reported in USD using the local conversion rule defined for this feature.

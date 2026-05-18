@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { isAbsolute, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runAudit } from '../audit/index.js';
 import { parseMatchingMode } from '../internal-movement/index.js';
@@ -50,18 +51,24 @@ export async function runCli(
     const matchingMode = parseMatchingMode(values['matching-mode']);
     const format = parseFormat(values.format);
     const dataDir = values['data-dir'] ?? './data';
+    const resolvedDataDir = resolveFromCwd(cwd, dataDir);
     const report = await runAudit({
-      dataDir,
+      dataDir: resolvedDataDir,
       dateRange,
       matchingMode,
-      statementSource: new CsvStatementSource(resolveFromCwd(cwd, dataDir)),
+      statementSource: new CsvStatementSource(resolvedDataDir),
     });
     const output = renderReport(report, format);
-    await writeOptionalOutput(values.output, output);
+    await writeOptionalOutput(
+      values.output === undefined
+        ? undefined
+        : resolveFromCwd(cwd, values.output),
+      output,
+    );
     io.stdout(output);
     return 0;
   } catch (error) {
-    io.stderr(`${(error as Error).message}\n`);
+    io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
     if (
       error instanceof InputFolderMissingError ||
       error instanceof NoStatementFilesError
@@ -79,9 +86,10 @@ function parseFormat(value: string | undefined): OutputFormat {
 }
 
 function resolveFromCwd(cwd: string, path: string): string {
-  return path.startsWith('/') ? path : `${cwd}/${path.replace(/^\.\//, '')}`;
+  return isAbsolute(path) ? path : resolve(cwd, path);
 }
 
+/* v8 ignore next 8 */
 if (import.meta.url === `file://${process.argv[1]}`) {
   const code = await runCli(process.argv.slice(2), process.cwd(), {
     stdout: (value) => process.stdout.write(value),

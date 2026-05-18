@@ -63,8 +63,11 @@ export class CsvStatementSource implements StatementSource {
     }
 
     if (statementFiles.some((file) => file.processingStatus === 'failed')) {
+      const failureDetails = statementFiles
+        .flatMap((file) => file.warnings)
+        .join('; ');
       throw new UnsafeStatementError(
-        'One or more statement files could not be parsed safely',
+        `One or more statement files could not be parsed safely: ${failureDetails}`,
       );
     }
 
@@ -102,7 +105,7 @@ export class CsvStatementSource implements StatementSource {
     if (header.join(',') !== REQUIRED_HEADER.join(',')) {
       return {
         statementFile: failedStatement(filePath, header, [
-          `Header mismatch in ${filePath}`,
+          `Header mismatch in ${filePath}. Expected: ${REQUIRED_HEADER.join(',')}. Received: ${header.join(',')}`,
         ]),
         transactions: [],
       };

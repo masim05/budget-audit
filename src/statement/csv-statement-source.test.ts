@@ -73,6 +73,9 @@ describe('CSV statement source', () => {
     await expect(new CsvStatementSource(empty).load()).rejects.toBeInstanceOf(
       UnsafeStatementError,
     );
+    await expect(new CsvStatementSource(empty).load()).rejects.toThrow(
+      'Expected: Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type',
+    );
     const noHeader = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     await writeFile(join(noHeader, 'empty.csv'), '', 'utf8');
     await expect(
