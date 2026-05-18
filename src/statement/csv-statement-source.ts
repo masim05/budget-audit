@@ -8,20 +8,17 @@ import {
 import type { Transaction } from '../transaction/index.js';
 import type { StatementFile } from './statement-file.js';
 import type { StatementLoadResult, StatementSource } from './index.js';
-
-const REQUIRED_HEADER = [
-  'Date',
-  'Transaction Type',
-  'Transaction Number',
-  'Account Number',
-  'Credit',
-  'Debit',
-  'Credit(AMD)',
-  'Debit(AMD)',
-  'Remitter/Beneficiary',
-  'Details',
-  'Type',
-];
+import {
+  formatInputDiagnostics,
+  type InputDiagnosticIssue,
+} from './input-diagnostic.js';
+import {
+  detectStatementCurrency,
+  expectedStatementHeader,
+  isSupportedStatementHeader,
+  normalizeStatementHeader,
+  REQUIRED_STATEMENT_HEADER,
+} from './supported-statement-format.js';
 
 export class InputFolderMissingError extends Error {}
 export class NoStatementFilesError extends Error {}
@@ -41,34 +38,46 @@ export class CsvStatementSource implements StatementSource {
       );
     }
 
-    const csvFiles = entries
-      .filter((entry) => entry.toLowerCase().endsWith('.csv'))
-      .sort();
-    if (csvFiles.length === 0) {
+    const folderEntries = entries.sort();
+    if (folderEntries.length === 0) {
       throw new NoStatementFilesError(
-        `No CSV statement files found in ${this.folderPath}`,
+        `No statement files found in ${this.folderPath}`,
       );
     }
 
     const statementFiles: StatementFile[] = [];
     const transactions: Transaction[] = [];
     const warnings: string[] = [];
+    const unsupportedIssues: InputDiagnosticIssue[] = [];
 
-    for (const fileName of csvFiles) {
+    for (const fileName of folderEntries) {
       const filePath = join(this.folderPath, fileName);
+      if (!fileName.toLowerCase().endsWith('.csv')) {
+        unsupportedIssues.push({
+          filePath,
+          reason:
+            'unsupported file type. Statement folders may contain only supported CSV statement files.',
+        });
+        statementFiles.push(
+          failedStatement(
+            filePath,
+            [],
+            [
+              'Unsupported file type. Statement folders may contain only supported CSV statement files.',
+            ],
+          ),
+        );
+        continue;
+      }
       const file = await this.loadFile(filePath, fileName, transactions.length);
       statementFiles.push(file.statementFile);
       transactions.push(...file.transactions);
       warnings.push(...file.statementFile.warnings);
+      unsupportedIssues.push(...file.unsupportedIssues);
     }
 
-    if (statementFiles.some((file) => file.processingStatus === 'failed')) {
-      const failureDetails = statementFiles
-        .flatMap((file) => file.warnings)
-        .join('; ');
-      throw new UnsafeStatementError(
-        `One or more statement files could not be parsed safely: ${failureDetails}`,
-      );
+    if (unsupportedIssues.length > 0) {
+      throw new UnsafeStatementError(formatInputDiagnostics(unsupportedIssues));
     }
 
     return {
@@ -97,23 +106,55 @@ export class CsvStatementSource implements StatementSource {
           [`Unreadable file: ${filePath}`],
         ),
         transactions: [],
+        unsupportedIssues: [
+          {
+            filePath,
+            reason: 'unreadable file',
+          },
+        ],
       };
     }
 
     const rows = parseCsv(content);
-    const header = rows[0] ?? [];
-    if (header.join(',') !== REQUIRED_HEADER.join(',')) {
+    const header = normalizeStatementHeader(rows[0] ?? []);
+    if (!isSupportedStatementHeader(header)) {
+      const received = header.join(',') || '(empty file)';
       return {
         statementFile: failedStatement(filePath, header, [
-          `Header mismatch in ${filePath}. Expected: ${REQUIRED_HEADER.join(',')}. Received: ${header.join(',')}`,
+          `Unsupported CSV header. Expected: ${expectedStatementHeader()}. Received: ${received}`,
         ]),
         transactions: [],
+        unsupportedIssues: [
+          {
+            filePath,
+            reason: 'unsupported CSV header',
+            expected: expectedStatementHeader(),
+            received,
+          },
+        ],
+      };
+    }
+
+    const currency = detectStatementCurrency(fileName);
+    if (currency === null) {
+      return {
+        statementFile: failedStatement(filePath, header, [
+          'Unsupported filename. Expected `_AMD_` or `_USD_` in the file name.',
+        ]),
+        transactions: [],
+        unsupportedIssues: [
+          {
+            filePath,
+            reason: 'unsupported filename',
+            expected: 'Filename containing `_AMD_` or `_USD_`',
+            received: fileName,
+          },
+        ],
       };
     }
 
     const accountNumbers = new Set<string>();
     const transactions: Transaction[] = [];
-    const currency = inferCurrencyFromFileName(fileName);
 
     rows.slice(1).forEach((row, index) => {
       if (row.length === 1 && row[0].trim() === '') return;
@@ -143,6 +184,7 @@ export class CsvStatementSource implements StatementSource {
         warnings,
       },
       transactions,
+      unsupportedIssues: [],
     };
   }
 }
@@ -168,9 +210,9 @@ function normalizeRow(
   currency: Currency,
   sequence: number,
 ): Transaction {
-  if (row.length !== REQUIRED_HEADER.length) {
+  if (row.length !== REQUIRED_STATEMENT_HEADER.length) {
     throw new Error(
-      `Expected ${REQUIRED_HEADER.length} columns but found ${row.length}`,
+      `Expected ${REQUIRED_STATEMENT_HEADER.length} columns but found ${row.length}`,
     );
   }
   const [
@@ -206,12 +248,6 @@ function normalizeRow(
     sourceFile,
     classification: 'invalid',
   };
-}
-
-function inferCurrencyFromFileName(fileName: string): Currency {
-  if (fileName.includes('_USD_')) return 'USD';
-  if (fileName.includes('_AMD_')) return 'AMD';
-  return 'UNKNOWN';
 }
 
 function parseCsv(content: string): string[][] {

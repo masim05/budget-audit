@@ -1,6 +1,6 @@
 # Budget Audit
 
-Budget Audit is a local Node.js CLI for auditing bank statement CSV exports. It reads statement files from `./data` by default, filters transactions by date range, excludes own-account transfers and currency conversions, and reports income and spend totals in USD.
+Budget Audit is a local Node.js CLI for auditing bank statement CSV exports. It reads statement files from `./data/statements` by default, filters transactions by date range, excludes own-account transfers and currency conversions, and reports income and spend totals in USD.
 
 ## Install
 
@@ -15,7 +15,7 @@ For local development, run the CLI through npm after building:
 
 ```bash
 npm run audit
-npm run audit -- --data-dir ./data --from 2026-05-01 --to 2026-05-31
+npm run audit -- --data-dir ./data/statements --from 2026-05-01 --to 2026-05-31
 npm run audit -- --matching-mode permissive --format json --output reports/may-2026.json
 ```
 
@@ -29,7 +29,7 @@ Then run:
 
 ```bash
 budget-audit audit
-budget-audit audit --data-dir ./data --from 2026-05-01 --to 2026-05-31
+budget-audit audit --data-dir ./data/statements --from 2026-05-01 --to 2026-05-31
 budget-audit audit --matching-mode permissive --format json --output reports/may-2026.json
 ```
 
@@ -40,6 +40,8 @@ Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD)
 ```
 
 `Credit` and `Debit` contain original AMD or USD amounts. `Credit(AMD)` and `Debit(AMD)` contain AMD-normalized amounts used for reporting conversion when the source currency is AMD.
+
+Statement folders may contain only supported CSV statement files. A supported file must use the required header after leading UTF-8 BOM markers are stripped from the first header column, and its filename must contain `_AMD_` or `_USD_`. Unsupported files fail the audit before totals are reported and are listed one file per line in stderr with the unsupported aspect and header details when applicable.
 
 ## Matching Mode
 

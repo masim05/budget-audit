@@ -28,16 +28,16 @@ describe('CSV statement source', () => {
     expect(result.statementFiles[0]?.processingStatus).toBe('processed');
   });
 
-  it('handles CSV quoting, CRLF endings, blank rows, warnings, and unknown currency filenames', async () => {
+  it('handles CSV quoting, CRLF endings, blank rows, and warnings', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     await writeFile(
-      join(folder, 'statement.csv'),
+      join(folder, 'IE_USD_1001.csv'),
       `${header}\r\n15/05/2026,Transfer,001,ACC,"1,000.00",0.00,"400,000.00",0.00,"ACME, Inc.","Said ""hello""",Incoming\r\n\r\n15/05/2026,Transfer,002,ACC,not-a-number,0.00,0.00,0.00,Employer,Salary,Incoming`,
       'utf8',
     );
     const result = await new CsvStatementSource(folder).load();
     expect(result.transactions).toHaveLength(1);
-    expect(result.transactions[0]?.currency).toBe('UNKNOWN');
+    expect(result.transactions[0]?.currency).toBe('USD');
     expect(result.transactions[0]?.remitterOrBeneficiary).toBe('ACME, Inc.');
     expect(result.transactions[0]?.details).toBe('Said "hello"');
     expect(result.warnings[0]).toContain('Invalid amount');

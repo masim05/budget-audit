@@ -14,4 +14,6 @@ export interface StatementSource {
 }
 
 export * from './csv-statement-source.js';
+export * from './input-diagnostic.js';
 export * from './statement-file.js';
+export * from './supported-statement-format.js';

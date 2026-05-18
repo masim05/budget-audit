@@ -50,7 +50,7 @@ export async function runCli(
     );
     const matchingMode = parseMatchingMode(values['matching-mode']);
     const format = parseFormat(values.format);
-    const dataDir = values['data-dir'] ?? './data';
+    const dataDir = values['data-dir'] ?? './data/statements';
     const resolvedDataDir = resolveFromCwd(cwd, dataDir);
     const report = await runAudit({
       dataDir: resolvedDataDir,
