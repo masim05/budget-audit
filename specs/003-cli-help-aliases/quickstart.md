@@ -16,6 +16,8 @@ npm run build
 
 ## Manual Smoke Checks
 
+The audit examples below use dummy statement files committed in `examples/statements` so they work from a fresh checkout.
+
 Request help through the package audit script:
 
 ```sh
@@ -38,13 +40,13 @@ npm run audit -- --help
 Run an audit with short date aliases:
 
 ```sh
-npm run audit -- -f 2026-05-01 -t 2026-05-31
+npm run audit -- --data-dir examples/statements -f 2026-05-01 -t 2026-05-31
 ```
 
 Run an audit with a short output alias:
 
 ```sh
-npm run audit -- -f 2026-05-01 -t 2026-05-31 -o reports/audit.txt
+npm run audit -- --data-dir examples/statements -f 2026-05-01 -t 2026-05-31 -o reports/audit.txt
 ```
 
 ## Validation

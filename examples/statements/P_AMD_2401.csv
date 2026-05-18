@@ -1,0 +1,3 @@
+Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+18/05/2026,Transfer,DUMMY-003,AMD-2401,0.00,0.00,"20,000.00",0.00,Example Client,Dummy AMD income,Incoming
+22/05/2026,Card,DUMMY-004,AMD-2401,0.00,0.00,0.00,"8,000.00",Example Cafe,Dummy AMD spend,Outgoing
