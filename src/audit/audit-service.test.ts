@@ -80,7 +80,7 @@ describe('audit service', () => {
     expect(report.warnings).toContain('Invalid transaction bad');
   });
 
-  it('excludes in-range internal movement sides matched against all loaded transactions', async () => {
+  it('keeps in-range movement candidates when the counterpart has a different date', async () => {
     const report = await runAudit({
       dataDir: './data',
       dateRange: { from: '2026-05-01', to: '2026-05-31' },
@@ -95,8 +95,11 @@ describe('audit service', () => {
         },
       ]),
     });
-    expect(report.totals).toEqual({ incomeUsd: 0n, spendUsd: 0n });
-    expect(report.excludedInternalTransfers).toHaveLength(1);
+    expect(report.totals).toEqual({ incomeUsd: 100n, spendUsd: 0n });
+    expect(report.excludedInternalTransfers).toHaveLength(0);
+    expect(report.warnings).toContain(
+      'Internal movement candidate split was included in totals because accounts or amounts did not match',
+    );
   });
 
   it('converts AMD external amounts to USD totals', async () => {
