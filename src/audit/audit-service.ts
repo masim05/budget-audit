@@ -30,8 +30,14 @@ export async function runAudit(
     isWithinDateRange(transaction.date, options.dateRange),
   );
   const movementResult = findInternalMovements(
-    transactions,
+    loaded.transactions,
     options.matchingMode,
+  );
+  const inRangeTransactionIds = new Set(
+    transactions.map((transaction) => transaction.id),
+  );
+  const inRangeInternalMatches = movementResult.matches.filter((match) =>
+    match.transactionIds.some((id) => inRangeTransactionIds.has(id)),
   );
   let incomeUsd = 0n;
   let spendUsd = 0n;
@@ -65,10 +71,10 @@ export async function runAudit(
     ].sort(),
     totals: { incomeUsd, spendUsd },
     processedFiles: loaded.statementFiles,
-    excludedInternalTransfers: movementResult.matches.filter(
+    excludedInternalTransfers: inRangeInternalMatches.filter(
       (match) => match.type === 'transfer',
     ),
-    excludedInternalConversions: movementResult.matches.filter(
+    excludedInternalConversions: inRangeInternalMatches.filter(
       (match) => match.type === 'conversion',
     ),
     warnings,

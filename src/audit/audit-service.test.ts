@@ -80,6 +80,25 @@ describe('audit service', () => {
     expect(report.warnings).toContain('Invalid transaction bad');
   });
 
+  it('excludes in-range internal movement sides matched against all loaded transactions', async () => {
+    const report = await runAudit({
+      dataDir: './data',
+      dateRange: { from: '2026-05-01', to: '2026-05-31' },
+      matchingMode: 'strict',
+      statementSource: source([
+        tx('split', 100n, 0n),
+        {
+          ...tx('split-out', 0n, 100n),
+          transactionNumber: 'split',
+          accountNumber: 'ACC2',
+          date: '2026-06-01',
+        },
+      ]),
+    });
+    expect(report.totals).toEqual({ incomeUsd: 0n, spendUsd: 0n });
+    expect(report.excludedInternalTransfers).toHaveLength(1);
+  });
+
   it('converts AMD external amounts to USD totals', async () => {
     const report = await runAudit({
       dataDir: './data',

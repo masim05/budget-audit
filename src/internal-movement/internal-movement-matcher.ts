@@ -18,7 +18,9 @@ export function findInternalMovements(
     const key =
       transaction.transactionNumber ||
       `${transaction.date}:${transaction.details}`;
-    groups.set(key, [...(groups.get(key) ?? []), transaction]);
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [transaction]);
+    else group.push(transaction);
   }
 
   const matches: InternalMatch[] = [];

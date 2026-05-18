@@ -10,7 +10,6 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/**/*.test-helper.ts',
         'src/**/index.ts',
-        'src/cli/main.ts',
         'src/audit/audit-report.ts',
         'src/audit/audit-run.ts',
         'src/internal-movement/internal-match.ts',
