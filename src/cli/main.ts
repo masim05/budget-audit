@@ -19,6 +19,28 @@ import {
   type OutputFormat,
 } from './output.js';
 
+const cliOptions = {
+  'data-dir': { type: 'string' },
+  from: { type: 'string', short: 'f' },
+  to: { type: 'string', short: 't' },
+  'matching-mode': { type: 'string' },
+  format: { type: 'string' },
+  output: { type: 'string', short: 'o' },
+  help: { type: 'boolean', short: 'h' },
+} as const;
+
+const helpMessage = `Usage: budget-audit audit [options]
+
+Options:
+  --data-dir <path>        Statement folder path (default: ./data/statements)
+  -f, --from <date>        Audit range start date (YYYY-MM-DD)
+  -t, --to <date>          Audit range end date (YYYY-MM-DD)
+  --matching-mode <mode>   Internal movement matching mode: strict or permissive
+  --format <format>        Output format: text or json (default: text)
+  -o, --output <path>      Write the report to a file
+  -h, --help               Show this help message
+`;
+
 export interface CliIo {
   stdout: (value: string) => void;
   stderr: (value: string) => void;
@@ -33,16 +55,16 @@ export async function runCli(
     const { positionals, values } = parseArgs({
       args: argv,
       allowPositionals: true,
-      options: {
-        'data-dir': { type: 'string' },
-        from: { type: 'string' },
-        to: { type: 'string' },
-        'matching-mode': { type: 'string' },
-        format: { type: 'string' },
-        output: { type: 'string' },
-      },
+      options: cliOptions,
     });
-    if (positionals[0] !== 'audit') throw new Error('Expected command: audit');
+    const command = positionals[0];
+    if (values.help === true) {
+      if (command !== undefined && command !== 'audit')
+        throw new Error('Expected command: audit');
+      io.stdout(helpMessage);
+      return 0;
+    }
+    if (command !== 'audit') throw new Error('Expected command: audit');
     const defaultRange = previousFullCalendarMonth();
     const dateRange = validateDateRange(
       values.from ?? defaultRange.from,
