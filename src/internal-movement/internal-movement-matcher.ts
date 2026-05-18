@@ -9,6 +9,11 @@ export interface InternalMovementResult {
   warnings: string[];
 }
 
+interface InternalMovementPair {
+  incoming: Transaction;
+  outgoing: Transaction;
+}
+
 export function findInternalMovements(
   transactions: Transaction[],
   matchingMode: MatchingMode,
@@ -35,17 +40,15 @@ export function findInternalMovements(
       (transaction) => (transaction.debit ?? 0n) !== 0n,
     );
     if (incoming.length === 0 || outgoing.length === 0) continue;
-    if (
-      !hasDistinctAccounts(group) ||
-      !hasMatchingEvidence(incoming, outgoing)
-    ) {
+    const pairs = findMatchingPairs(incoming, outgoing);
+    const matchedTransactions = transactionsFromPairs(pairs);
+    if (!hasDistinctAccounts(matchedTransactions) || pairs.length === 0) {
       warnings.push(
         `Internal movement candidate ${key} was included in totals because accounts or amounts did not match`,
       );
       continue;
     }
-    const confidence =
-      incoming.length === 1 && outgoing.length === 1 ? 'high' : 'probable';
+    const confidence = pairs.length === 1 ? 'high' : 'probable';
     if (confidence === 'probable' && matchingMode === 'strict') {
       warnings.push(
         `Ambiguous internal movement candidate ${key} was included in totals`,
@@ -53,20 +56,22 @@ export function findInternalMovements(
       continue;
     }
     const type =
-      new Set(group.map((transaction) => transaction.currency)).size > 1
+      new Set(matchedTransactions.map((transaction) => transaction.currency))
+        .size > 1
         ? 'conversion'
         : 'transfer';
-    for (const transaction of group) excludedTransactionIds.add(transaction.id);
-    const amount = group.reduce((largest, transaction) => {
-      const usd = matchingUsdAmount(transaction) ?? 0n;
+    for (const transaction of matchedTransactions)
+      excludedTransactionIds.add(transaction.id);
+    const amount = matchedTransactions.reduce((largest, transaction) => {
+      const usd = matchingUsdAmount(transaction)!;
       return usd > largest ? usd : largest;
     }, 0n);
     matches.push({
       matchId: `${type}-${matches.length + 1}`,
       type,
       confidence,
-      transactionIds: group.map((transaction) => transaction.id),
-      transactionNumbers: group.map(
+      transactionIds: matchedTransactions.map((transaction) => transaction.id),
+      transactionNumbers: matchedTransactions.map(
         (transaction) => transaction.transactionNumber,
       ),
       usdAmount: amount,
@@ -83,19 +88,43 @@ function hasDistinctAccounts(group: Transaction[]): boolean {
   );
 }
 
-function hasMatchingEvidence(
+function findMatchingPairs(
   incoming: Transaction[],
   outgoing: Transaction[],
+): InternalMovementPair[] {
+  const pairs: InternalMovementPair[] = [];
+  for (const incomingTransaction of incoming) {
+    for (const outgoingTransaction of outgoing) {
+      if (hasMatchingEvidence(incomingTransaction, outgoingTransaction)) {
+        pairs.push({
+          incoming: incomingTransaction,
+          outgoing: outgoingTransaction,
+        });
+      }
+    }
+  }
+  return pairs;
+}
+
+function hasMatchingEvidence(
+  incomingTransaction: Transaction,
+  outgoingTransaction: Transaction,
 ): boolean {
-  return incoming.some((incomingTransaction) =>
-    outgoing.some((outgoingTransaction) => {
-      if (isCurrencyExchangePair(incomingTransaction, outgoingTransaction))
-        return true;
-      const incomingAmount = matchingUsdAmount(incomingTransaction);
-      const outgoingAmount = matchingUsdAmount(outgoingTransaction);
-      return incomingAmount !== undefined && incomingAmount === outgoingAmount;
-    }),
-  );
+  if (incomingTransaction.date !== outgoingTransaction.date) return false;
+  if (isCurrencyExchangePair(incomingTransaction, outgoingTransaction))
+    return true;
+  const incomingAmount = matchingUsdAmount(incomingTransaction);
+  const outgoingAmount = matchingUsdAmount(outgoingTransaction);
+  return incomingAmount !== undefined && incomingAmount === outgoingAmount;
+}
+
+function transactionsFromPairs(pairs: InternalMovementPair[]): Transaction[] {
+  const transactions = new Map<string, Transaction>();
+  for (const pair of pairs) {
+    transactions.set(pair.incoming.id, pair.incoming);
+    transactions.set(pair.outgoing.id, pair.outgoing);
+  }
+  return [...transactions.values()];
 }
 
 function isCurrencyExchangePair(

@@ -173,6 +173,49 @@ describe('internal movement matching', () => {
     expect(result.excludedTransactionIds.has('usd-out')).toBe(true);
   });
 
+  it('excludes same-number same-date transfer pairs when an unrelated same-number row exists', () => {
+    const transfer = [
+      {
+        ...tx('usd-in', '000186', 'in', 'USD'),
+        date: '2026-04-16',
+        accountNumber: '16600024901001',
+        credit: 1375933n,
+        creditAmd: 0n,
+        debitAmd: 0n,
+      },
+      {
+        ...tx('usd-out', '000186', 'out', 'USD'),
+        date: '2026-04-16',
+        accountNumber: '16600493392401',
+        debit: 1375933n,
+        creditAmd: 0n,
+        debitAmd: 0n,
+      },
+      {
+        ...tx('unrelated-out', '000186', 'out', 'USD'),
+        date: '2026-03-09',
+        accountNumber: '1660018970070100',
+        transactionType: 'Currency Exchange',
+        debit: 19365n,
+        creditAmd: 0n,
+        debitAmd: 0n,
+      },
+    ];
+
+    const result = findInternalMovements(transfer, 'strict');
+
+    expect(result.warnings).toEqual([]);
+    expect(result.matches[0]).toMatchObject({
+      type: 'transfer',
+      confidence: 'high',
+      transactionNumbers: ['000186', '000186'],
+      usdAmount: 1375933n,
+    });
+    expect(result.excludedTransactionIds.has('usd-in')).toBe(true);
+    expect(result.excludedTransactionIds.has('usd-out')).toBe(true);
+    expect(result.excludedTransactionIds.has('unrelated-out')).toBe(false);
+  });
+
   it('keeps matched permissive groups stable when an extra unknown-currency row is present', () => {
     const withUnknownExtra = [
       tx('matched-in', 'n10', 'in'),
