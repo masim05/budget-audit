@@ -15,8 +15,11 @@ For local development, run the CLI through npm after building:
 
 ```bash
 npm run audit
+npm run audit -- -h
 npm run audit -- --data-dir ./data/statements --from 2026-05-01 --to 2026-05-31
+npm run audit -- -f 2026-05-01 -t 2026-05-31
 npm run audit -- --matching-mode permissive --format json --output reports/may-2026.json
+npm run audit -- -f 2026-05-01 -t 2026-05-31 -o reports/may-2026.json
 ```
 
 To make the `budget-audit` command available directly in your shell, link the package first:
@@ -28,9 +31,12 @@ npm link
 Then run:
 
 ```bash
+budget-audit -h
 budget-audit audit
 budget-audit audit --data-dir ./data/statements --from 2026-05-01 --to 2026-05-31
+budget-audit audit -f 2026-05-01 -t 2026-05-31
 budget-audit audit --matching-mode permissive --format json --output reports/may-2026.json
+budget-audit audit -f 2026-05-01 -t 2026-05-31 -o reports/may-2026.json
 ```
 
 ## CSV Header
