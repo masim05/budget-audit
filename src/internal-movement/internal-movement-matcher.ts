@@ -37,7 +37,7 @@ export function findInternalMovements(
     if (incoming.length === 0 || outgoing.length === 0) continue;
     if (
       !hasDistinctAccounts(group) ||
-      !hasMatchingAmounts(incoming, outgoing)
+      !hasMatchingEvidence(incoming, outgoing)
     ) {
       warnings.push(
         `Internal movement candidate ${key} was included in totals because accounts or amounts did not match`,
@@ -83,17 +83,39 @@ function hasDistinctAccounts(group: Transaction[]): boolean {
   );
 }
 
-function hasMatchingAmounts(
+function hasMatchingEvidence(
   incoming: Transaction[],
   outgoing: Transaction[],
 ): boolean {
   return incoming.some((incomingTransaction) =>
     outgoing.some((outgoingTransaction) => {
+      if (isCurrencyExchangePair(incomingTransaction, outgoingTransaction))
+        return true;
       const incomingAmount = matchingUsdAmount(incomingTransaction);
       const outgoingAmount = matchingUsdAmount(outgoingTransaction);
       return incomingAmount !== undefined && incomingAmount === outgoingAmount;
     }),
   );
+}
+
+function isCurrencyExchangePair(
+  incomingTransaction: Transaction,
+  outgoingTransaction: Transaction,
+): boolean {
+  return (
+    incomingTransaction.transactionNumber !== '' &&
+    incomingTransaction.transactionNumber ===
+      outgoingTransaction.transactionNumber &&
+    incomingTransaction.currency !== outgoingTransaction.currency &&
+    incomingTransaction.currency !== 'UNKNOWN' &&
+    outgoingTransaction.currency !== 'UNKNOWN' &&
+    isCurrencyExchange(incomingTransaction) &&
+    isCurrencyExchange(outgoingTransaction)
+  );
+}
+
+function isCurrencyExchange(transaction: Transaction): boolean {
+  return transaction.transactionType.toLowerCase() === 'currency exchange';
 }
 
 function matchingUsdAmount(transaction: Transaction): bigint | undefined {

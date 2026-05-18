@@ -140,6 +140,39 @@ describe('internal movement matching', () => {
     ).toBe(100n);
   });
 
+  it('excludes same-number currency exchanges when statement AMD-normalized amounts are zero', () => {
+    const exchange = [
+      {
+        ...tx('amd-in', '000185', 'in', 'AMD'),
+        transactionType: 'Currency Exchange',
+        accountNumber: '16600024901001',
+        credit: 18600000n,
+        creditAmd: 0n,
+        debitAmd: 0n,
+      },
+      {
+        ...tx('usd-out', '000185', 'out', 'USD'),
+        transactionType: 'Currency Exchange',
+        accountNumber: '16600952425600',
+        debit: 50000n,
+        creditAmd: 0n,
+        debitAmd: 0n,
+      },
+    ];
+
+    const result = findInternalMovements(exchange, 'strict');
+
+    expect(result.warnings).toEqual([]);
+    expect(result.matches[0]).toMatchObject({
+      type: 'conversion',
+      confidence: 'high',
+      transactionNumbers: ['000185', '000185'],
+      usdAmount: 50000n,
+    });
+    expect(result.excludedTransactionIds.has('amd-in')).toBe(true);
+    expect(result.excludedTransactionIds.has('usd-out')).toBe(true);
+  });
+
   it('keeps matched permissive groups stable when an extra unknown-currency row is present', () => {
     const withUnknownExtra = [
       tx('matched-in', 'n10', 'in'),
