@@ -8,6 +8,14 @@
 
 **Input**: User description: "minor improvements: support more CSV formats for input data using the files in ./data as the complete set of required formats; format error messages more user friendly with new lines; use ./data/statements as the default folder; assert the folder contains only supported CSV files; add tests, commit, push, and ensure CI is green."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: How should files in `./data/statements` that are not supported statement CSVs be handled? → A: Fail with blocker if any unsupported file is in the folder.
+- Q: What header normalization should define supported CSV formats? → A: Exact header columns after stripping leading UTF-8 BOM markers from the first column.
+- Q: What makes a CSV file supported beyond a recognized header? → A: Header plus filename currency marker; supported CSV filenames must contain `_AMD_` or `_USD_`.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Audit Real Statement Exports (Priority: P1)
@@ -22,7 +30,7 @@ As a budget auditor, I want the application to accept all real statement CSV exp
 
 1. **Given** a statement folder containing CSV exports with the visible required header and invisible encoding markers, **When** the user runs the default audit, **Then** the files are recognized as supported statement files.
 2. **Given** statement CSVs with CRLF line endings, quoted numbers, quoted commas, and multilingual text, **When** the user runs an audit, **Then** the audit reads the rows without corrupting columns or text.
-3. **Given** supported statement files named with required account/currency patterns, **When** the audit completes, **Then** each supported file appears in the processing summary with a successful status or row-specific warnings.
+3. **Given** supported statement files named with `_AMD_` or `_USD_` currency markers, **When** the audit completes, **Then** each supported file appears in the processing summary with a successful status or row-specific warnings.
 
 ---
 
@@ -53,7 +61,7 @@ As a user, I want input errors to be readable across multiple lines so that I ca
 
 1. **Given** multiple unsupported CSV files are present, **When** the audit fails, **Then** the error message lists one file issue per line or bullet.
 2. **Given** a file has an unsupported header, **When** the audit fails, **Then** the diagnostic shows the expected header and the received header in a readable multi-line format.
-3. **Given** a folder contains non-CSV files, **When** the audit runs, **Then** non-CSV files are ignored or reported according to existing input-folder rules without being treated as supported statements.
+3. **Given** a statement folder contains non-CSV files, **When** the audit runs, **Then** the audit fails with file-specific blocker diagnostics instead of ignoring them.
 
 ---
 
@@ -67,7 +75,7 @@ As a user, I want the statement folder to contain only supported CSV statement f
 
 **Acceptance Scenarios**:
 
-1. **Given** the statement folder contains at least one unsupported CSV file, **When** the audit runs, **Then** the audit fails before reporting totals.
+1. **Given** the statement folder contains at least one unsupported file, **When** the audit runs, **Then** the audit fails with a blocker before reporting totals.
 2. **Given** the statement folder contains only supported CSV files, **When** the audit runs, **Then** no unsupported-format diagnostic is emitted.
 
 ### Edge Cases
@@ -76,7 +84,8 @@ As a user, I want the statement folder to contain only supported CSV statement f
 - Statement files may use CRLF or LF line endings.
 - Statement files may contain quoted amounts, quoted commas, punctuation, repeated spaces, and multilingual text.
 - CSV headers that look visually correct but include invisible characters must be normalized before support is determined.
-- Unsupported CSV files must not be silently ignored when they are in the statement folder.
+- CSV files with a recognized header but no `_AMD_` or `_USD_` filename marker are unsupported and must block the audit.
+- Unsupported files must not be silently ignored when they are in the statement folder.
 - Error output for many failing files must remain readable in a terminal.
 - A missing default folder should still produce a clear missing-input diagnostic.
 
@@ -87,15 +96,16 @@ As a user, I want the statement folder to contain only supported CSV statement f
 - **FR-001**: System MUST use `./data/statements` as the default statement input folder when the user does not provide a data directory.
 - **FR-002**: Users MUST be able to override the default statement folder with an explicit data directory.
 - **FR-003**: System MUST support every statement CSV format represented by the current local sample files in `./data`.
-- **FR-004**: System MUST recognize supported statement headers even when exported files include invisible encoding markers before the visible first column.
+- **FR-004**: System MUST recognize supported statement headers by comparing exact header columns after stripping leading UTF-8 BOM markers from the first column.
 - **FR-005**: System MUST preserve row parsing for supported CSV files with CRLF line endings, quoted numeric values, quoted commas, and multilingual text.
-- **FR-006**: System MUST fail the audit when the statement folder contains an unsupported CSV file.
-- **FR-007**: System MUST report unsupported CSV files with file-specific diagnostics that identify the file and the unsupported aspect.
-- **FR-008**: System MUST format multi-file input errors with line breaks so each file issue is readable without horizontal scrolling.
-- **FR-009**: System MUST include expected and received header information for header-related failures in a readable format.
-- **FR-010**: System MUST keep successful audit output behavior unchanged for supported statement files except for the default input folder path.
-- **FR-011**: System MUST add tests that cover all newly supported input formats, the new default folder, unsupported CSV rejection, and friendly multi-line diagnostics.
-- **FR-012**: System MUST pass the existing local CI checks before the changes are committed and pushed.
+- **FR-006**: System MUST treat a CSV file as supported only when its normalized header is recognized and its filename contains `_AMD_` or `_USD_`.
+- **FR-007**: System MUST fail the audit with a blocking diagnostic when the statement folder contains any unsupported file.
+- **FR-008**: System MUST report unsupported files with file-specific diagnostics that identify the file and the unsupported aspect.
+- **FR-009**: System MUST format multi-file input errors with line breaks so each file issue is readable without horizontal scrolling.
+- **FR-010**: System MUST include expected and received header information for header-related failures in a readable format.
+- **FR-011**: System MUST keep successful audit output behavior unchanged for supported statement files except for the default input folder path.
+- **FR-012**: System MUST add tests that cover all newly supported input formats, the new default folder, unsupported file rejection, and friendly multi-line diagnostics.
+- **FR-013**: System MUST pass the existing local CI checks before the changes are committed and pushed.
 
 ### Quality & Architecture Requirements
 
@@ -107,7 +117,7 @@ As a user, I want the statement folder to contain only supported CSV statement f
 
 ### Key Entities *(include if feature involves data)*
 
-- **Supported Statement Format**: A recognized CSV export shape that can be safely parsed into statement transactions; includes header normalization rules and row parsing expectations.
+- **Supported Statement Format**: A recognized CSV export shape that can be safely parsed into statement transactions; requires exact header columns after leading UTF-8 BOM markers are stripped from the first column, a filename containing `_AMD_` or `_USD_`, and the row parsing expectations for the sampled exports.
 - **Statement Folder**: The local folder that contains CSV statement files for an audit run; defaults to `./data/statements`.
 - **Input Diagnostic**: A user-facing message describing unsupported files, unsafe parsing, missing input, or row-level warnings.
 - **Statement File**: A single CSV file processed during an audit, including its path, header, account numbers, transaction count, processing status, and warnings.
@@ -118,7 +128,7 @@ As a user, I want the statement folder to contain only supported CSV statement f
 
 - **SC-001**: 100% of CSV files currently present in `./data` are accepted as supported statement formats when placed in the default statement folder.
 - **SC-002**: A default audit run uses `./data/statements` without requiring any command-line option.
-- **SC-003**: Unsupported CSV files in the statement folder are rejected with a file-specific diagnostic before totals are reported.
+- **SC-003**: Unsupported files in the statement folder are rejected with a file-specific blocking diagnostic before totals are reported.
 - **SC-004**: Multi-file input errors are displayed with at least one separate line per failing file.
 - **SC-005**: A user can identify the expected and received header for a header failure from the terminal output without reading source code.
 - **SC-006**: All local CI checks pass before push: build, lint, format check, and coverage test.
@@ -128,6 +138,6 @@ As a user, I want the statement folder to contain only supported CSV statement f
 
 - The local CSV files currently under `./data` are the complete sample set for supported statement export formats in this improvement.
 - The visible business column names remain semantically equivalent to the existing statement contract.
-- Non-CSV files are not statement inputs and do not need to be parsed as statements.
+- Non-CSV files are unsupported in the statement folder and must block the audit with a file-specific diagnostic.
 - The existing explicit `--data-dir` behavior remains available for users with a different folder layout.
 - Implementation and tests will happen in a later planning/tasks/implementation phase after this specification is accepted.
