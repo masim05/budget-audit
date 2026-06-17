@@ -1,0 +1,7 @@
+# receiver normalisation rules and direct mappings
+mappings:
+  "COMPANY LTD": "Дом"
+  "OIL STATION #12": "бензин + мойка"
+patterns:
+  - pattern: "/^CAF?E/i"
+    cluster: "кафе/рестораны"

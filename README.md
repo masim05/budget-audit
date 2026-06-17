@@ -20,6 +20,10 @@ npm run audit -- --data-dir ./data/statements --from 2026-05-01 --to 2026-05-31
 npm run audit -- -f 2026-05-01 -t 2026-05-31
 npm run audit -- --matching-mode permissive --format json --output reports/may-2026.json
 npm run audit -- -f 2026-05-01 -t 2026-05-31 -o reports/may-2026.json
+npm run cluster -- -h
+npm run cluster -- -f 2026-05-01 -t 2026-05-31
+npm run cluster -- -sf ./data/statements -cf ./data/checks -a h -v
+npm run cluster -- -co
 ```
 
 To make the `budget-audit` command available directly in your shell, link the package first:
@@ -37,6 +41,31 @@ budget-audit audit --data-dir ./data/statements --from 2026-05-01 --to 2026-05-3
 budget-audit audit -f 2026-05-01 -t 2026-05-31
 budget-audit audit --matching-mode permissive --format json --output reports/may-2026.json
 budget-audit audit -f 2026-05-01 -t 2026-05-31 -o reports/may-2026.json
+budget-audit cluster --help
+budget-audit cluster -f 2026-05-01 -t 2026-05-31
+budget-audit cluster -sf ./data/statements -cf ./data/checks -a d --verbose
+budget-audit cluster --cluster-other
+```
+
+## Spend Clusters
+
+Use `cluster` to group external spend transactions by payment receiver and print spend totals in THB.
+
+- Mapping file path: `config/clusters.yml` (tracked in git)
+- Template: `config/clusters.example.yml`
+- Approach modes: deterministic (`-a d` or `-a 1`) and hybrid (`-a h` or `-a 2`)
+- Interactive reassignment for `Other`: `--cluster-other` (`-co`)
+
+Mapping format:
+
+```yaml
+# receiver normalisation rules and direct mappings
+mappings:
+  'COMPANY LTD': 'Дом'
+  'OIL STATION #12': 'бензин + мойка'
+patterns:
+  - pattern: '/^CAF?E/i'
+    cluster: 'кафе/рестораны'
 ```
 
 ## CSV Header
