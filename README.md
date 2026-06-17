@@ -56,3 +56,13 @@ Strict matching is the default and excludes only high-confidence internal moveme
 ## Architecture Notes
 
 The project is CLI-first, uses DDD-style domain folders with exported boundary interfaces, and does not require a database, network service, or MCP dependency. Future source adapters, such as a bank API or web interface, should reuse the domain use cases without changing domain behavior.
+
+# Cluster command
+
+Examples:
+
+```bash
+npm run cluster -- --from 2026-05-01 --to 2026-05-31
+npm run cluster -- -sf ./data/statements -cf ./data/checks -v
+npm run cluster -- -a 2 --cluster-other
+```
