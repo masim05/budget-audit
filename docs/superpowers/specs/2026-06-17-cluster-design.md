@@ -56,7 +56,7 @@ Interactive (-co):
 
 Output
 ------
-Human readable summary grouped by cluster with totals in base currency (USD). With `-v`, list each transaction under its cluster as `YYYY-MM-DD HH:MM — <amount> — <receiver> — <statement>`.
+Human readable summary grouped by cluster with totals in base currency (THB). With `-v`, list each transaction under its cluster as `YYYY-MM-DD HH:MM — <amount> — <receiver> — <statement>`.
 
 Help & README
 -------------
