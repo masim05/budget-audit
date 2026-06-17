@@ -1,4 +1,4 @@
-# receiver normalisation rules and direct mappings
+# receiver normalization rules and direct mappings
 mappings:
   "COMPANY LTD": "Дом"
   "OIL STATION #12": "бензин + мойка"

@@ -288,8 +288,7 @@ async function assignOtherClustersInteractively(
       options.stdout(`\nReceiver: ${samples[0].receiver}\n`);
       options.stdout('Sample transactions:\n');
       for (const sample of samples) {
-        const line = `${sample.transaction.date} 00:00 — ${formatMinorAmount(sample.amountMinor)} — ${sample.receiver} — ${sample.statementFile}${sample.checkFile ? ` — ${sample.checkFile}` : ''}`;
-        options.stdout(`${line}\n`);
+        options.stdout(`${formatVerboseTransactionLine(sample)}\n`);
       }
       const choices = [...existingClusters].sort().join(', ') || 'none';
       const answer = (
@@ -346,9 +345,7 @@ export function renderClusterReport(
     lines.push(`- ${summary.cluster}: ${formatMinorAmount(summary.total)}`);
     if (!verbose) continue;
     for (const entry of summary.entries) {
-      lines.push(
-        `  ${entry.transaction.date} 00:00 — ${formatMinorAmount(entry.amountMinor)} — ${entry.receiver} — ${entry.statementFile}${entry.checkFile ? ` — ${entry.checkFile}` : ''}`,
-      );
+      lines.push(`  ${formatVerboseTransactionLine(entry)}`);
     }
   }
   lines.push(`Total spend (THB): ${formatMinorAmount(total)}`);
@@ -362,6 +359,10 @@ function formatMinorAmount(minorUnits: bigint): string {
   const whole = absolute / 100n;
   const fraction = (absolute % 100n).toString().padStart(2, '0');
   return `${sign}${whole}.${fraction}`;
+}
+
+function formatVerboseTransactionLine(entry: ClusteredSpend): string {
+  return `${entry.transaction.date} 00:00 — ${formatMinorAmount(entry.amountMinor)} — ${entry.receiver} — ${entry.statementFile}${entry.checkFile ? ` — ${entry.checkFile}` : ''}`;
 }
 
 async function loadClusterConfig(path: string): Promise<ClusterConfig> {
@@ -456,7 +457,7 @@ async function saveClusterConfig(
 ): Promise<void> {
   const mappingKeys = Object.keys(config.mappings).sort();
   const lines = [
-    '# receiver normalisation rules and direct mappings',
+    '# receiver normalization rules and direct mappings',
     'mappings:',
   ];
   if (mappingKeys.length === 0) {
