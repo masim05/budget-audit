@@ -10,4 +10,4 @@ Thumbs.db
 *.tmp
 *.swp
 .vscode/
-.idea/
+.idea/.worktrees/
