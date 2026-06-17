@@ -61,7 +61,7 @@ Human readable summary grouped by cluster with totals in base currency (THB). Wi
 Help & README
 -------------
 - Update `README.md` adding usage examples for `npm run cluster` with exemplar commands and explanation of `config/clusters.yml` location and format.
-- Implement CLI help message: `budget-audit cluster --help` to document options and examples.
+- Implement CLI help message: `npm run cluster -- --help` to document options and examples.
 
 Testing
 -------
@@ -80,4 +80,3 @@ Next steps
 3. Implement interactive clustering and persistence.
 4. Update README and CLI help messages.
 5. Add tests and run CI locally.
-
