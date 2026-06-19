@@ -44,6 +44,8 @@ describe('interactive clustering', () => {
     expect(runGit).toHaveBeenCalledWith([
       'git',
       'commit',
+      '--only',
+      configPath,
       '-m',
       'chore: update cluster mappings',
     ]);
@@ -93,7 +95,9 @@ describe('interactive clustering', () => {
     const promptText = promptCalls[0];
     expect(promptText).toContain('Receiver: TEST VENDOR');
     expect(promptText).toContain('Samples:');
-    expect(promptText).toContain('Txn 2001 (TH_THB_2001.csv) [check: 2001-slip.jpg]');
+    expect(promptText).toContain(
+      'Txn 2001 (TH_THB_2001.csv) [check: 2001-slip.jpg]',
+    );
     expect(promptText).toContain('Txn 2002 (TH_THB_2002.csv)');
   });
 

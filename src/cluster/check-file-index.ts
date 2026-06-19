@@ -23,7 +23,10 @@ export async function buildCheckFileIndex(
     const indicator = /^(?:slip|receipt|check)$/i;
 
     // Helper to find the next basename segment after a match position
-    const nextSegment = (matchIndex: number, matchLen: number): string | null => {
+    const nextSegment = (
+      matchIndex: number,
+      matchLen: number,
+    ): string | null => {
       const rest = name.slice(matchIndex + matchLen);
       const m = rest.match(/[^A-Za-z0-9]*([A-Za-z0-9]+)/);
       return m ? m[1] : null;

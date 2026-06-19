@@ -85,6 +85,7 @@ function transactionUsdAmount(transaction: Transaction): bigint | undefined {
   const original = preferredAmount(transaction.credit, transaction.debit);
   if (transaction.currency === 'USD') return original;
   if (transaction.currency === 'UNKNOWN') return undefined;
+  if (transaction.currency === 'THB') return undefined;
   const normalizedAmd = preferredAmount(
     transaction.creditAmd,
     transaction.debitAmd,

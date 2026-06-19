@@ -77,6 +77,8 @@ export async function clusterOtherReceivers(
     await options.runGit([
       'git',
       'commit',
+      '--only',
+      options.configPath,
       '-m',
       'chore: update cluster mappings',
     ]);

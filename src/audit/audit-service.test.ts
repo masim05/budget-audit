@@ -159,4 +159,24 @@ describe('audit service', () => {
       'Unsupported currency for transaction unknown-spend; excluded from totals',
     );
   });
+
+  it('excludes THB transactions from totals with warnings', async () => {
+    const report = await runAudit({
+      dataDir: './data',
+      dateRange: { from: '2026-05-01', to: '2026-05-31' },
+      matchingMode: 'strict',
+      statementSource: source([
+        { ...tx('thb-income', 5000n, 0n), currency: 'THB' },
+        { ...tx('thb-spend', 0n, 2500n), currency: 'THB' },
+        { ...tx('usd-income', 100n, 0n), currency: 'USD' },
+      ]),
+    });
+    expect(report.totals).toEqual({ incomeUsd: 100n, spendUsd: 0n });
+    expect(report.warnings).toContain(
+      'Unsupported currency for transaction thb-income; excluded from totals',
+    );
+    expect(report.warnings).toContain(
+      'Unsupported currency for transaction thb-spend; excluded from totals',
+    );
+  });
 });
