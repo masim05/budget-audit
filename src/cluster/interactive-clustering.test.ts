@@ -90,13 +90,8 @@ describe('interactive clustering', () => {
     });
 
     expect(updated.mappings['UNKNOWN VENDOR']).toBeUndefined();
-    expect(runGit).toHaveBeenCalledWith(['git', 'add', configPath]);
-    expect(runGit).toHaveBeenCalledWith([
-      'git',
-      'commit',
-      '-m',
-      'chore: update cluster mappings',
-    ]);
+    // Since we skipped, the config didn't change, so no git operations
+    expect(runGit).not.toHaveBeenCalled();
   });
 
   it('creates cluster and assigns in single flow', async () => {
@@ -181,5 +176,58 @@ describe('interactive clustering', () => {
     expect(updated.mappings['TAXI SERVICE']).toBe('transport');
     expect(updated.clusters).toContain('transport');
     expect(updated.clusters).not.toContain('create');
+  });
+
+  it('does not commit when all receivers are skipped', async () => {
+    const folder = join(
+      process.cwd(),
+      'test-output',
+      'interactive-clustering-all-skip-' + Date.now(),
+    );
+    await mkdir(folder, { recursive: true });
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockResolvedValue(undefined);
+    const prompt = vi
+      .fn()
+      .mockResolvedValueOnce('skip')
+      .mockResolvedValueOnce('skip');
+
+    const updated = await clusterOtherReceivers({
+      configPath,
+      config: { mappings: {}, patterns: [], clusters: ['Other'] },
+      receivers: [
+        {
+          normalizedReceiver: 'VENDOR ONE',
+          samples: [
+            {
+              transactionNumber: '5001',
+              statementFile: 'TH_THB_5001.csv',
+              checkFile: null,
+            },
+          ],
+        },
+        {
+          normalizedReceiver: 'VENDOR TWO',
+          samples: [
+            {
+              transactionNumber: '5002',
+              statementFile: 'TH_THB_5002.csv',
+              checkFile: null,
+            },
+          ],
+        },
+      ],
+      prompt,
+      runGit,
+    });
+
+    expect(Object.keys(updated.mappings)).toHaveLength(0);
+    expect(runGit).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,6 @@
+mappings:
+  TAXI SERVICE: transport
+patterns: []
+clusters:
+  - Other
+  - transport

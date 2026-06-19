@@ -210,4 +210,74 @@ describe('cluster CLI contract', () => {
     expect(stdout).toContain('--cluster-other');
     expect(stdout).toContain('--approach');
   });
+
+  it('handles git spawn errors gracefully', async () => {
+    const testDir = await mkdtemp(
+      join(tmpdir(), 'budget-audit-spawn-error-'),
+    );
+    const statements = join(testDir, 'statements');
+    const checks = join(testDir, 'checks');
+    const config = join(testDir, 'config');
+    await mkdir(statements);
+    await mkdir(checks);
+    await mkdir(config);
+    
+    // Initialize git repo
+    await writeFile(join(testDir, '.gitignore'), '', 'utf8');
+    const { spawn: nodeSpawn } = await import('node:child_process');
+    await new Promise<void>((resolve, reject) => {
+      const proc = nodeSpawn('git', ['init'], { cwd: testDir });
+      proc.on('close', (code) => (code === 0 ? resolve() : reject()));
+    });
+    await new Promise<void>((resolve, reject) => {
+      const proc = nodeSpawn('git', ['config', 'user.email', 'test@example.com'], { cwd: testDir });
+      proc.on('close', (code) => (code === 0 ? resolve() : reject()));
+    });
+    await new Promise<void>((resolve, reject) => {
+      const proc = nodeSpawn('git', ['config', 'user.name', 'Test User'], { cwd: testDir });
+      proc.on('close', (code) => (code === 0 ? resolve() : reject()));
+    });
+    
+    // Create a config with only "Other" cluster
+    await writeFile(
+      join(config, 'clusters.yml'),
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+    
+    // Create statement with unmatched receiver
+    await writeFile(
+      join(statements, 'TH_THB_3001.csv'),
+      `${header}\n2026-05-15,Card,3001,ACC,0.00,50.00,0.00,0.00,Test Vendor,Test,Outgoing\n`,
+      'utf8',
+    );
+    
+    // Create a check file
+    await writeFile(join(checks, '3001-slip.jpg'), '', 'utf8');
+
+    let stderr = '';
+    const code = await runCli(
+      [
+        'cluster',
+        '-sf',
+        statements,
+        '-cf',
+        checks,
+        '--cluster-other',
+        '-f',
+        '2026-05-01',
+        '-t',
+        '2026-05-31',
+      ],
+      '/nonexistent/path/that/causes/spawn/error',
+      {
+        stdout: () => undefined,
+        stderr: (value) => (stderr += value),
+        prompt: async () => 'assign:transport',
+      },
+    );
+
+    expect(code).toBe(1);
+    expect(stderr).toBeTruthy();
+  });
 });

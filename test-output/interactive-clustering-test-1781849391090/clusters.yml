@@ -1,0 +1,6 @@
+mappings:
+  CAFE MARKET: food
+patterns: []
+clusters:
+  - Other
+  - food

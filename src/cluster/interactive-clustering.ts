@@ -19,6 +19,8 @@ export async function clusterOtherReceivers(
   options: InteractiveClusteringOptions,
 ): Promise<ClusterConfig> {
   const next = structuredClone(options.config);
+  let changed = false;
+
   for (const receiver of options.receivers) {
     const firstChoice = await options.prompt(
       `Assign ${receiver.normalizedReceiver}`,
@@ -30,6 +32,7 @@ export async function clusterOtherReceivers(
 
     if (firstChoice.startsWith('create:')) {
       next.clusters.push(firstChoice.slice('create:'.length));
+      changed = true;
 
       // Prompt again for the actual assignment
       const assignChoice = await options.prompt(
@@ -44,15 +47,21 @@ export async function clusterOtherReceivers(
       next.mappings[receiver.normalizedReceiver] = firstChoice.slice(
         'assign:'.length,
       );
+      changed = true;
     }
   }
-  await saveClusterConfig(options.configPath, next);
-  await options.runGit(['git', 'add', options.configPath]);
-  await options.runGit([
-    'git',
-    'commit',
-    '-m',
-    'chore: update cluster mappings',
-  ]);
+
+  // Only persist and commit if there were actual changes
+  if (changed) {
+    await saveClusterConfig(options.configPath, next);
+    await options.runGit(['git', 'add', options.configPath]);
+    await options.runGit([
+      'git',
+      'commit',
+      '-m',
+      'chore: update cluster mappings',
+    ]);
+  }
+
   return next;
 }

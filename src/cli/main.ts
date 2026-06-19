@@ -181,6 +181,9 @@ export async function runCli(
                 cwd,
                 stdio: 'inherit',
               });
+              proc.on('error', (err) => {
+                reject(err);
+              });
               proc.on('close', (code) => {
                 if (code === 0) resolve();
                 else reject(new Error(`git command failed with code ${code}`));
