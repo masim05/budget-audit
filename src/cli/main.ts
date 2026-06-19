@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { isAbsolute, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import { spawn } from 'node:child_process';
+import { createInterface } from 'node:readline';
 import { runAudit } from '../audit/index.js';
 import { parseMatchingMode } from '../internal-movement/index.js';
 import {
@@ -23,6 +25,8 @@ import {
   runCluster,
   TextClusterReportWriter,
   type ClusterApproach,
+  buildCheckFileIndex,
+  clusterOtherReceivers,
 } from '../cluster/index.js';
 
 const cliOptions = {
@@ -60,7 +64,7 @@ Options:
   -f, --from <date>                Audit range start date (YYYY-MM-DD)
   -t, --to <date>                  Audit range end date (YYYY-MM-DD)
   --approach <mode>                Clustering approach: deterministic or hybrid (default: deterministic)
-  --cluster-other                  Enable interactive clustering for unmatched receivers (not yet supported)
+  --cluster-other                  Enable interactive clustering for unmatched receivers
   -v, --verbose                    Show detailed transaction information
   -h, --help                       Show this help message
 `;
@@ -68,6 +72,7 @@ Options:
 export interface CliIo {
   stdout: (value: string) => void;
   stderr: (value: string) => void;
+  prompt: (question: string) => Promise<string>;
 }
 
 function normalizeArgv(argv: string[]): string[] {
@@ -110,11 +115,6 @@ export async function runCli(
     }
 
     if (command === 'cluster') {
-      if (values['cluster-other'] === true) {
-        throw new Error(
-          'Interactive clustering (--cluster-other) is not yet supported. This feature is planned for a future release.',
-        );
-      }
       const defaultRange = previousFullCalendarMonth();
       const dateRange = validateDateRange(
         values.from ?? defaultRange.from,
@@ -128,19 +128,88 @@ export async function runCli(
         cwd,
         values['checks-folder'] ?? './data/checks',
       );
+      const configPath = resolveFromCwd(cwd, './config/clusters.yml');
+      const config = await loadClusterConfig(configPath);
       const report = await runCluster({
         statementsFolder,
         checksFolder,
         dateRange,
         approach: parseClusterApproach(values.approach),
         statementSource: new CsvStatementSource(statementsFolder),
-        config: await loadClusterConfig(
-          resolveFromCwd(cwd, './config/clusters.yml'),
-        ),
+        config,
       });
-      io.stdout(
-        new TextClusterReportWriter().write(report, values.verbose === true),
-      );
+
+      if (
+        values['cluster-other'] === true &&
+        report.unmatchedReceivers.length > 0
+      ) {
+        // Build check file index
+        const checkFileIndex = await buildCheckFileIndex(checksFolder);
+
+        // Build receiver samples from the report
+        const receivers = report.unmatchedReceivers.map((receiver) => {
+          const otherCluster = report.clusters.find((c) => c.name === 'Other');
+          const receiverTransactions =
+            otherCluster?.transactions.filter(
+              (tx) => tx.normalizedReceiver === receiver,
+            ) ?? [];
+
+          const samples = receiverTransactions.slice(0, 3).map((tx) => {
+            const checkFiles = checkFileIndex.get(tx.transactionNumber) ?? [];
+            return {
+              transactionNumber: tx.transactionNumber,
+              statementFile: tx.sourceFile,
+              checkFile: checkFiles.length > 0 ? checkFiles[0] : null,
+            };
+          });
+
+          return {
+            normalizedReceiver: receiver,
+            samples,
+          };
+        });
+
+        // Run interactive clustering
+        const updatedConfig = await clusterOtherReceivers({
+          configPath,
+          config,
+          receivers,
+          prompt: io.prompt,
+          runGit: async (args: string[]) => {
+            return new Promise<void>((resolve, reject) => {
+              const proc = spawn(args[0], args.slice(1), {
+                cwd,
+                stdio: 'inherit',
+              });
+              proc.on('close', (code) => {
+                if (code === 0) resolve();
+                else reject(new Error(`git command failed with code ${code}`));
+              });
+            });
+          },
+        });
+
+        // Re-run the cluster with updated config
+        const updatedReport = await runCluster({
+          statementsFolder,
+          checksFolder,
+          dateRange,
+          approach: parseClusterApproach(values.approach),
+          statementSource: new CsvStatementSource(statementsFolder),
+          config: updatedConfig,
+        });
+
+        io.stdout(
+          new TextClusterReportWriter().write(
+            updatedReport,
+            values.verbose === true,
+          ),
+        );
+      } else {
+        io.stdout(
+          new TextClusterReportWriter().write(report, values.verbose === true),
+        );
+      }
       return 0;
     }
 
@@ -197,11 +266,24 @@ function resolveFromCwd(cwd: string, path: string): string {
   return isAbsolute(path) ? path : resolve(cwd, path);
 }
 
-/* v8 ignore next 8 */
+/* v8 ignore next 19 */
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
   const code = await runCli(process.argv.slice(2), process.cwd(), {
     stdout: (value) => process.stdout.write(value),
     stderr: (value) => process.stderr.write(value),
+    prompt: (question: string) => {
+      return new Promise((resolve) => {
+        rl.question(question + ' ', (answer) => {
+          resolve(answer);
+        });
+      });
+    },
   });
+  rl.close();
   process.exitCode = code;
 }

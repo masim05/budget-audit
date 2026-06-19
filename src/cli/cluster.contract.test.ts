@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -33,7 +33,11 @@ describe('cluster CLI contract', () => {
         '2026-05-31',
       ],
       process.cwd(),
-      { stdout: (value) => (stdout += value), stderr: () => undefined },
+      {
+        stdout: (value) => (stdout += value),
+        stderr: () => undefined,
+        prompt: async () => 'skip',
+      },
     );
 
     expect(code).toBe(0);
@@ -66,7 +70,11 @@ describe('cluster CLI contract', () => {
         '2026-05-31',
       ],
       process.cwd(),
-      { stdout: (value) => (stdout += value), stderr: () => undefined },
+      {
+        stdout: (value) => (stdout += value),
+        stderr: () => undefined,
+        prompt: async () => 'skip',
+      },
     );
 
     expect(code).toBe(0);
@@ -74,13 +82,18 @@ describe('cluster CLI contract', () => {
     expect(stdout).toContain('food');
   });
 
-  it('rejects --cluster-other with not-yet-supported error', async () => {
+  it('supports --cluster-other with no unmatched receivers', async () => {
     const statements = await mkdtemp(
       join(tmpdir(), 'budget-audit-statements-'),
     );
     const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+    await writeFile(
+      join(statements, 'TH_THB_1001.csv'),
+      `${header}\n2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing\n`,
+      'utf8',
+    );
 
-    let stderr = '';
+    let stdout = '';
     const code = await runCli(
       [
         'cluster',
@@ -96,14 +109,90 @@ describe('cluster CLI contract', () => {
       ],
       process.cwd(),
       {
-        stdout: () => undefined,
-        stderr: (value) => (stderr += value),
+        stdout: (value) => (stdout += value),
+        stderr: () => undefined,
+        prompt: async () => 'skip',
       },
     );
 
-    expect(code).toBe(1);
-    expect(stderr).toContain('not yet supported');
-    expect(stderr).toContain('--cluster-other');
+    expect(code).toBe(0);
+    expect(stdout).toContain('Cluster:');
+    expect(stdout).toContain('food');
+  });
+
+  it('runs interactive clustering with unmatched receivers', async () => {
+    const testDir = await mkdtemp(
+      join(tmpdir(), 'budget-audit-interactive-'),
+    );
+    const statements = join(testDir, 'statements');
+    const checks = join(testDir, 'checks');
+    const config = join(testDir, 'config');
+    await mkdir(statements);
+    await mkdir(checks);
+    await mkdir(config);
+    
+    // Initialize git repo
+    await writeFile(join(testDir, '.gitignore'), '', 'utf8');
+    const { spawn: nodeSpawn } = await import('node:child_process');
+    await new Promise<void>((resolve, reject) => {
+      const proc = nodeSpawn('git', ['init'], { cwd: testDir });
+      proc.on('close', (code) => (code === 0 ? resolve() : reject()));
+    });
+    await new Promise<void>((resolve, reject) => {
+      const proc = nodeSpawn('git', ['config', 'user.email', 'test@example.com'], { cwd: testDir });
+      proc.on('close', (code) => (code === 0 ? resolve() : reject()));
+    });
+    await new Promise<void>((resolve, reject) => {
+      const proc = nodeSpawn('git', ['config', 'user.name', 'Test User'], { cwd: testDir });
+      proc.on('close', (code) => (code === 0 ? resolve() : reject()));
+    });
+    
+    // Create a config with only "Other" cluster
+    await writeFile(
+      join(config, 'clusters.yml'),
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+    
+    // Create statement with unmatched receiver
+    await writeFile(
+      join(statements, 'TH_THB_2001.csv'),
+      `${header}\n2026-05-15,Card,2001,ACC,0.00,50.00,0.00,0.00,Unknown Cafe,Coffee,Outgoing\n`,
+      'utf8',
+    );
+    
+    // Create a check file
+    await writeFile(join(checks, '2001-slip.jpg'), '', 'utf8');
+
+    let stdout = '';
+    let promptCalls = 0;
+    const code = await runCli(
+      [
+        'cluster',
+        '-sf',
+        statements,
+        '-cf',
+        checks,
+        '--cluster-other',
+        '-f',
+        '2026-05-01',
+        '-t',
+        '2026-05-31',
+      ],
+      testDir,
+      {
+        stdout: (value) => (stdout += value),
+        stderr: () => undefined,
+        prompt: async () => {
+          promptCalls++;
+          return 'skip';
+        },
+      },
+    );
+
+    expect(code).toBe(0);
+    expect(promptCalls).toBeGreaterThan(0);
+    expect(stdout).toContain('Cluster:');
   });
 
   it('prints cluster help without loading statements', async () => {
@@ -111,6 +200,7 @@ describe('cluster CLI contract', () => {
     const code = await runCli(['cluster', '--help'], process.cwd(), {
       stdout: (value) => (stdout += value),
       stderr: () => undefined,
+      prompt: async () => 'skip',
     });
 
     expect(code).toBe(0);

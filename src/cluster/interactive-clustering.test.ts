@@ -1,0 +1,185 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
+import { clusterOtherReceivers } from './interactive-clustering.js';
+
+describe('interactive clustering', () => {
+  it('persists new assignments and auto-commits config changes', async () => {
+    const folder = join(
+      process.cwd(),
+      'test-output',
+      'interactive-clustering-test-' + Date.now(),
+    );
+    await mkdir(folder, { recursive: true });
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockResolvedValue(undefined);
+    const prompt = vi
+      .fn()
+      .mockResolvedValueOnce('create:food')
+      .mockResolvedValueOnce('assign:food');
+
+    const updated = await clusterOtherReceivers({
+      configPath,
+      config: { mappings: {}, patterns: [], clusters: ['Other'] },
+      receivers: [
+        {
+          normalizedReceiver: 'CAFE MARKET',
+          samples: [
+            {
+              transactionNumber: '1001',
+              statementFile: 'TH_THB_1001.csv',
+              checkFile: '1001-slip.jpg',
+            },
+          ],
+        },
+      ],
+      prompt,
+      runGit,
+    });
+
+    expect(updated.mappings['CAFE MARKET']).toBe('food');
+    expect(runGit).toHaveBeenCalledWith(['git', 'add', configPath]);
+    expect(runGit).toHaveBeenCalledWith([
+      'git',
+      'commit',
+      '-m',
+      'chore: update cluster mappings',
+    ]);
+  });
+
+  it('skips receivers with skip action', async () => {
+    const folder = join(
+      process.cwd(),
+      'test-output',
+      'interactive-clustering-skip-' + Date.now(),
+    );
+    await mkdir(folder, { recursive: true });
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockResolvedValue(undefined);
+    const prompt = vi.fn().mockResolvedValueOnce('skip');
+
+    const updated = await clusterOtherReceivers({
+      configPath,
+      config: { mappings: {}, patterns: [], clusters: ['Other'] },
+      receivers: [
+        {
+          normalizedReceiver: 'UNKNOWN VENDOR',
+          samples: [
+            {
+              transactionNumber: '2001',
+              statementFile: 'TH_THB_2001.csv',
+              checkFile: null,
+            },
+          ],
+        },
+      ],
+      prompt,
+      runGit,
+    });
+
+    expect(updated.mappings['UNKNOWN VENDOR']).toBeUndefined();
+    expect(runGit).toHaveBeenCalledWith(['git', 'add', configPath]);
+    expect(runGit).toHaveBeenCalledWith([
+      'git',
+      'commit',
+      '-m',
+      'chore: update cluster mappings',
+    ]);
+  });
+
+  it('creates cluster and assigns in single flow', async () => {
+    const folder = join(
+      process.cwd(),
+      'test-output',
+      'interactive-clustering-create-' + Date.now(),
+    );
+    await mkdir(folder, { recursive: true });
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockResolvedValue(undefined);
+    const prompt = vi
+      .fn()
+      .mockResolvedValueOnce('create:groceries')
+      .mockResolvedValueOnce('assign:groceries');
+
+    const updated = await clusterOtherReceivers({
+      configPath,
+      config: { mappings: {}, patterns: [], clusters: ['Other'] },
+      receivers: [
+        {
+          normalizedReceiver: 'BIG C SUPERMARKET',
+          samples: [
+            {
+              transactionNumber: '3001',
+              statementFile: 'TH_THB_3001.csv',
+              checkFile: null,
+            },
+          ],
+        },
+      ],
+      prompt,
+      runGit,
+    });
+
+    expect(updated.clusters).toContain('groceries');
+    expect(updated.mappings['BIG C SUPERMARKET']).toBe('groceries');
+  });
+
+  it('assigns directly to existing cluster', async () => {
+    const folder = join(
+      process.cwd(),
+      'test-output',
+      'interactive-clustering-direct-' + Date.now(),
+    );
+    await mkdir(folder, { recursive: true });
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n  - "transport"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockResolvedValue(undefined);
+    const prompt = vi.fn().mockResolvedValueOnce('assign:transport');
+
+    const updated = await clusterOtherReceivers({
+      configPath,
+      config: { mappings: {}, patterns: [], clusters: ['Other', 'transport'] },
+      receivers: [
+        {
+          normalizedReceiver: 'TAXI SERVICE',
+          samples: [
+            {
+              transactionNumber: '4001',
+              statementFile: 'TH_THB_4001.csv',
+              checkFile: null,
+            },
+          ],
+        },
+      ],
+      prompt,
+      runGit,
+    });
+
+    expect(updated.mappings['TAXI SERVICE']).toBe('transport');
+    expect(updated.clusters).toContain('transport');
+    expect(updated.clusters).not.toContain('create');
+  });
+});
