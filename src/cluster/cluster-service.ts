@@ -6,10 +6,12 @@ import type { ClusterReport, ClusterServiceOptions } from './cluster-report.js';
 
 export async function runCluster(options: ClusterServiceOptions): Promise<ClusterReport> {
   const loaded = await options.statementSource.load();
-  const movementResult = findInternalMovements(loaded.transactions, 'strict');
+  const inRangeTransactions = loaded.transactions.filter((t) =>
+    isWithinDateRange(t.date, options.dateRange),
+  );
+  const movementResult = findInternalMovements(inRangeTransactions, 'strict');
 
-  const spendTransactions = loaded.transactions.filter((transaction) => {
-    if (!isWithinDateRange(transaction.date, options.dateRange)) return false;
+  const spendTransactions = inRangeTransactions.filter((transaction) => {
     if (movementResult.excludedTransactionIds.has(transaction.id)) return false;
     return classifyExternalTransaction(transaction) === 'spend' && transaction.currency === 'THB';
   });
