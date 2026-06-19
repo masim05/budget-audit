@@ -33,5 +33,19 @@ export async function saveClusterConfig(
   config: ClusterConfig,
 ): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, stringify(config), 'utf8');
+
+  // Canonicalize config for deterministic YAML output:
+  // - mappings sorted by normalized receiver key
+  // - patterns sorted by pattern string
+  // - clusters unique and sorted
+  const mappings = Object.fromEntries(
+    Object.entries(config.mappings ?? {}).sort(([a], [b]) => a.localeCompare(b)),
+  );
+  const patterns = (config.patterns ?? []).slice().sort((a, b) =>
+    String(a.pattern).localeCompare(String(b.pattern)),
+  );
+  const clusters = Array.from(new Set(config.clusters ?? [])).sort();
+
+  const canonical = { mappings, patterns, clusters };
+  await writeFile(path, stringify(canonical), 'utf8');
 }
