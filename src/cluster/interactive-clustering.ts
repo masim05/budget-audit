@@ -26,8 +26,8 @@ export async function clusterOtherReceivers(
     const sampleInfo = options.receivers.find(
       (r) => r.normalizedReceiver === receiver.normalizedReceiver,
     );
-    let contextLines = [`\nReceiver: ${receiver.normalizedReceiver}`];
-    
+    const contextLines = [`\nReceiver: ${receiver.normalizedReceiver}`];
+
     if (sampleInfo && sampleInfo.samples.length > 0) {
       contextLines.push('Samples:');
       for (const sample of sampleInfo.samples) {
@@ -36,7 +36,7 @@ export async function clusterOtherReceivers(
         );
       }
     }
-    
+
     const promptText = `${contextLines.join('\n')}\nAssign ${receiver.normalizedReceiver}`;
 
     const firstChoice = await options.prompt(promptText);

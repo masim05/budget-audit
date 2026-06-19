@@ -21,7 +21,7 @@ export class TextClusterReportWriter {
           lines.push('');
           for (const transaction of cluster.transactions) {
             lines.push(
-              `  ${transaction.date} ${transaction.remitterOrBeneficiary} ฿${formatMoney(transaction.debit ?? 0n, 'THB')}`,
+              `  ${transaction.date} ${transaction.remitterOrBeneficiary} ฿${formatMoney(transaction.debit ?? 0n, 'THB')} (${transaction.details}) [${transaction.sourceFile}]`,
             );
           }
         }

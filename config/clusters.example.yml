@@ -1,4 +1,9 @@
 # example clusters
+# Expected CSV format:
+# Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+# 2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing
+# 2026-05-16,Card,1002,ACC,0.00,456.78,0.00,0.00,Lotus Rama 9,Groceries,Outgoing
+
 mappings:
   "COMPANY LTD": "дом"
   "OIL STATION #12": "бензин + мойка"

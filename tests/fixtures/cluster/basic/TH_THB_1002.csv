@@ -1,0 +1,3 @@
+Date,Transaction Type,Transaction Number,Account Number,Credit,Debit,Credit(AMD),Debit(AMD),Remitter/Beneficiary,Details,Type
+2026-05-17,Card,1003,ACC,0.00,250.00,0.00,0.00,7-Eleven,Snacks,Outgoing
+2026-05-18,Card,1004,ACC,0.00,890.50,0.00,0.00,Big C,Groceries,Outgoing

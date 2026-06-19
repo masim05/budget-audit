@@ -66,3 +66,5 @@ npm run cluster -- --from 2026-05-01 --to 2026-05-31
 npm run cluster -- -sf ./data/statements -cf ./data/checks -v
 npm run cluster -- -a 2 --cluster-other
 ```
+
+`config/clusters.yml` stores normalized receiver mappings, regex patterns, and the set of supported cluster names. Copy `config/clusters.example.yml` to `config/clusters.yml` before the first run.

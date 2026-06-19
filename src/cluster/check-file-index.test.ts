@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -17,12 +17,16 @@ describe('buildCheckFileIndex', () => {
     const index = await buildCheckFileIndex(folder);
 
     const files1001 = (index.get('1001') ?? []).slice().sort();
-    expect(files1001).toEqual([
-      '1001-receipt.pdf',
-      '1001-slip-2.jpg',
-      '1001-slip.jpg',
-      'invoice-2026-05-1001.jpg',
-    ].slice().sort());
+    expect(files1001).toEqual(
+      [
+        '1001-receipt.pdf',
+        '1001-slip-2.jpg',
+        '1001-slip.jpg',
+        'invoice-2026-05-1001.jpg',
+      ]
+        .slice()
+        .sort(),
+    );
     expect(index.get('2002')).toEqual(['2002-slip.jpg']);
     expect(index.has('readme')).toBe(false);
   });
@@ -49,7 +53,9 @@ describe('buildCheckFileIndex', () => {
 
     expect(index.get('12345')).toEqual(['12345-receipt.pdf']);
     expect(index.get('67890')).toEqual(['IMG_67890.jpg']);
-    expect(index.get('12')).toEqual(expect.arrayContaining(['12_slip_9999.jpg', 'file12.txt']));
+    expect(index.get('12')).toEqual(
+      expect.arrayContaining(['12_slip_9999.jpg', 'file12.txt']),
+    );
     expect(index.get('99')).toEqual(['99slip.jpg']); // 2-digit supported
     expect(index.get('5')).toEqual(['5.jpg']); // 1-digit supported
   });

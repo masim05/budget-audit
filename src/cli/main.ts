@@ -38,7 +38,7 @@ const cliOptions = {
   'matching-mode': { type: 'string' },
   format: { type: 'string' },
   output: { type: 'string', short: 'o' },
-  approach: { type: 'string' },
+  approach: { type: 'string', short: 'a' },
   'cluster-other': { type: 'boolean' },
   verbose: { type: 'boolean', short: 'v' },
   help: { type: 'boolean', short: 'h' },
@@ -63,7 +63,7 @@ Options:
   -cf, --checks-folder <path>      Checks folder path (default: ./data/checks)
   -f, --from <date>                Audit range start date (YYYY-MM-DD)
   -t, --to <date>                  Audit range end date (YYYY-MM-DD)
-  --approach <mode>                Clustering approach: deterministic or hybrid (default: deterministic)
+  -a, --approach <mode>            Clustering approach: 1/d=deterministic, 2/h=hybrid (default: deterministic)
   -co, --cluster-other             Enable interactive clustering for unmatched receivers
   -v, --verbose                    Show detailed transaction information
   -h, --help                       Show this help message
@@ -262,8 +262,10 @@ function parseFormat(value: string | undefined): OutputFormat {
 }
 
 function parseClusterApproach(value: string | undefined): ClusterApproach {
-  if (value === undefined || value === 'deterministic' || value === 'hybrid')
-    return value ?? 'deterministic';
+  if (value === undefined) return 'deterministic';
+  if (value === 'deterministic' || value === '1' || value === 'd')
+    return 'deterministic';
+  if (value === 'hybrid' || value === '2' || value === 'h') return 'hybrid';
   throw new Error(`Invalid cluster approach: ${value}`);
 }
 
