@@ -22,10 +22,16 @@ export async function runCluster(
 ): Promise<ClusterReport> {
   const loaded = await options.statementSource.load();
 
-  const movementResult = findInternalMovements(loaded.transactions, 'strict');
+  // First, keep only transactions within the requested date range. Internal movement
+  // detection must operate on the date-windowed set so out-of-range records cannot
+  // influence exclusions or generate warnings that apply to the in-range report.
+  const inRangeTransactions = loaded.transactions.filter((transaction) =>
+    isWithinDateRange(transaction.date, options.dateRange),
+  );
 
-  const spendTransactions = loaded.transactions.filter((transaction) => {
-    if (!isWithinDateRange(transaction.date, options.dateRange)) return false;
+  const movementResult = findInternalMovements(inRangeTransactions, 'strict');
+
+  const spendTransactions = inRangeTransactions.filter((transaction) => {
     if (movementResult.excludedTransactionIds.has(transaction.id)) return false;
     return (
       classifyExternalTransaction(transaction) === 'spend' &&
