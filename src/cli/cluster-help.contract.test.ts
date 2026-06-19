@@ -7,6 +7,7 @@ describe('cluster help contract', () => {
     const code = await runCli(['cluster', '--help'], process.cwd(), {
       stdout: (value) => (stdout += value),
       stderr: () => undefined,
+      prompt: async () => 'skip',
     });
 
     expect(code).toBe(0);
@@ -16,7 +17,7 @@ describe('cluster help contract', () => {
     expect(stdout).toContain('--from');
     expect(stdout).toContain('--to');
     expect(stdout).toContain('--approach');
-    expect(stdout).toContain('--cluster-other');
+    expect(stdout).toContain('-co, --cluster-other');
     expect(stdout).toContain('--verbose');
     expect(stdout).toContain('--help');
   });
@@ -26,6 +27,7 @@ describe('cluster help contract', () => {
     const code = await runCli(['cluster', '-h'], process.cwd(), {
       stdout: (value) => (stdout += value),
       stderr: () => undefined,
+      prompt: async () => 'skip',
     });
 
     expect(code).toBe(0);

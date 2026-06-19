@@ -22,9 +22,24 @@ export async function clusterOtherReceivers(
   let changed = false;
 
   for (const receiver of options.receivers) {
-    const firstChoice = await options.prompt(
-      `Assign ${receiver.normalizedReceiver}`,
+    // Build context info for the prompt
+    const sampleInfo = options.receivers.find(
+      (r) => r.normalizedReceiver === receiver.normalizedReceiver,
     );
+    let contextLines = [`\nReceiver: ${receiver.normalizedReceiver}`];
+    
+    if (sampleInfo && sampleInfo.samples.length > 0) {
+      contextLines.push('Samples:');
+      for (const sample of sampleInfo.samples) {
+        contextLines.push(
+          `  - Txn ${sample.transactionNumber} (${sample.statementFile})${sample.checkFile ? ` [check: ${sample.checkFile}]` : ''}`,
+        );
+      }
+    }
+    
+    const promptText = `${contextLines.join('\n')}\nAssign ${receiver.normalizedReceiver}`;
+
+    const firstChoice = await options.prompt(promptText);
 
     if (firstChoice === 'skip') {
       continue;

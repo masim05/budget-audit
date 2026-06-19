@@ -64,7 +64,7 @@ Options:
   -f, --from <date>                Audit range start date (YYYY-MM-DD)
   -t, --to <date>                  Audit range end date (YYYY-MM-DD)
   --approach <mode>                Clustering approach: deterministic or hybrid (default: deterministic)
-  --cluster-other                  Enable interactive clustering for unmatched receivers
+  -co, --cluster-other             Enable interactive clustering for unmatched receivers
   -v, --verbose                    Show detailed transaction information
   -h, --help                       Show this help message
 `;
@@ -83,6 +83,8 @@ function normalizeArgv(argv: string[]): string[] {
       normalized.push('--statements-folder');
     } else if (arg === '-cf') {
       normalized.push('--checks-folder');
+    } else if (arg === '-co') {
+      normalized.push('--cluster-other');
     } else {
       normalized.push(arg);
     }

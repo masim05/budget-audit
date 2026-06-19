@@ -53,6 +53,59 @@ describe('interactive clustering', () => {
     ]);
   });
 
+  it('includes transaction and check context in prompts', async () => {
+    const folder = join(
+      process.cwd(),
+      'test-output',
+      'interactive-clustering-context-' + Date.now(),
+    );
+    await mkdir(folder, { recursive: true });
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockResolvedValue(undefined);
+    const promptCalls: string[] = [];
+    const prompt = vi.fn().mockImplementation((question: string) => {
+      promptCalls.push(question);
+      return Promise.resolve('skip');
+    });
+
+    await clusterOtherReceivers({
+      configPath,
+      config: { mappings: {}, patterns: [], clusters: ['Other'] },
+      receivers: [
+        {
+          normalizedReceiver: 'TEST VENDOR',
+          samples: [
+            {
+              transactionNumber: '2001',
+              statementFile: 'TH_THB_2001.csv',
+              checkFile: '2001-slip.jpg',
+            },
+            {
+              transactionNumber: '2002',
+              statementFile: 'TH_THB_2002.csv',
+              checkFile: null,
+            },
+          ],
+        },
+      ],
+      prompt,
+      runGit,
+    });
+
+    expect(promptCalls).toHaveLength(1);
+    const promptText = promptCalls[0];
+    expect(promptText).toContain('Receiver: TEST VENDOR');
+    expect(promptText).toContain('Samples:');
+    expect(promptText).toContain('Txn 2001 (TH_THB_2001.csv) [check: 2001-slip.jpg]');
+    expect(promptText).toContain('Txn 2002 (TH_THB_2002.csv)');
+  });
+
   it('skips receivers with skip action', async () => {
     const folder = join(
       process.cwd(),

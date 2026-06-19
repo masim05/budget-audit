@@ -6,9 +6,12 @@ export async function buildCheckFileIndex(
   const index = new Map<string, string[]>();
   const files = await readdir(folderPath);
   for (const fileName of files.sort()) {
-    const match = /\d+/.exec(fileName);
+    // Extract transaction-number-like token: sequence of 3+ digits
+    // at word boundary (start of filename or after non-digit)
+    const match = /(?:^|[^\d])(\d{3,})/.exec(fileName);
     if (!match) continue;
-    index.set(match[0], [...(index.get(match[0]) ?? []), fileName]);
+    const txNumber = match[1];
+    index.set(txNumber, [...(index.get(txNumber) ?? []), fileName]);
   }
   return index;
 }

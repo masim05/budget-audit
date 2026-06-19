@@ -45,6 +45,44 @@ describe('cluster CLI contract', () => {
     expect(stdout).toContain('food');
   });
 
+  it('supports -co alias for --cluster-other', async () => {
+    const statements = await mkdtemp(
+      join(tmpdir(), 'budget-audit-statements-'),
+    );
+    const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+    await writeFile(
+      join(statements, 'TH_THB_1001.csv'),
+      `${header}\n2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing\n`,
+      'utf8',
+    );
+
+    let stdout = '';
+    const code = await runCli(
+      [
+        'cluster',
+        '-sf',
+        statements,
+        '-cf',
+        checks,
+        '-co',
+        '-f',
+        '2026-05-01',
+        '-t',
+        '2026-05-31',
+      ],
+      process.cwd(),
+      {
+        stdout: (value) => (stdout += value),
+        stderr: () => undefined,
+        prompt: async () => 'skip',
+      },
+    );
+
+    expect(code).toBe(0);
+    expect(stdout).toContain('Cluster:');
+    expect(stdout).toContain('food');
+  });
+
   it('runs the cluster command with long folder options', async () => {
     const statements = await mkdtemp(
       join(tmpdir(), 'budget-audit-statements-'),
