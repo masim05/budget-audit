@@ -1,4 +1,4 @@
-export type Currency = 'AMD' | 'USD' | 'UNKNOWN';
+export type Currency = 'AMD' | 'USD' | 'THB' | 'UNKNOWN';
 
 export const DEFAULT_AMD_PER_USD_MINOR = 40_000n;
 
@@ -23,6 +23,13 @@ export function formatUsd(minorUnits: bigint): string {
   const whole = absolute / 100n;
   const fraction = (absolute % 100n).toString().padStart(2, '0');
   return `${sign}${whole}.${fraction}`;
+}
+
+export function formatMoney(
+  minorUnits: bigint,
+  _currency: 'USD' | 'AMD' | 'THB',
+): string {
+  return formatUsd(minorUnits);
 }
 
 export function convertAmdToUsdMinor(

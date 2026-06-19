@@ -34,6 +34,7 @@ describe('supported statement format', () => {
   it('detects supported currency filename markers', () => {
     expect(detectStatementCurrency('IE_USD_1001.csv')).toBe('USD');
     expect(detectStatementCurrency('IE_AMD_5600.csv')).toBe('AMD');
+    expect(detectStatementCurrency('TH_THB_1001.csv')).toBe('THB');
     expect(detectStatementCurrency('statement.csv')).toBeNull();
   });
 });

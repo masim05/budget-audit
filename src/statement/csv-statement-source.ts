@@ -139,14 +139,14 @@ export class CsvStatementSource implements StatementSource {
     if (currency === null) {
       return {
         statementFile: failedStatement(filePath, header, [
-          'Unsupported filename. Expected `_AMD_` or `_USD_` in the file name.',
+          'Unsupported filename. Expected `_AMD_`, `_USD_`, or `_THB_` in the file name.',
         ]),
         transactions: [],
         unsupportedIssues: [
           {
             filePath,
             reason: 'unsupported filename',
-            expected: 'Filename containing `_AMD_` or `_USD_`',
+            expected: 'Filename containing `_AMD_`, `_USD_`, or `_THB_`',
             received: fileName,
           },
         ],

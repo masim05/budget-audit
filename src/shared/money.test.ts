@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   convertAmdToUsdMinor,
+  formatMoney,
   formatUsd,
   parseAmount,
   preferredAmount,
@@ -12,6 +13,10 @@ describe('money helpers', () => {
     expect(parseAmount('-1.25')).toBe(-125n);
     expect(parseAmount('')).toBeUndefined();
     expect(formatUsd(-123450n)).toBe('-1234.50');
+  });
+
+  it('formats THB totals', () => {
+    expect(formatMoney(12345n, 'THB')).toBe('123.45');
   });
 
   it('converts AMD to USD using the local deterministic rate', () => {

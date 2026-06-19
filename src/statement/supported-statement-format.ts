@@ -27,6 +27,7 @@ export function isSupportedStatementHeader(header: string[]): boolean {
 export function detectStatementCurrency(fileName: string): Currency | null {
   if (fileName.includes('_USD_')) return 'USD';
   if (fileName.includes('_AMD_')) return 'AMD';
+  if (fileName.includes('_THB_')) return 'THB';
   return null;
 }
 

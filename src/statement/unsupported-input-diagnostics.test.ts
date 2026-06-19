@@ -28,7 +28,7 @@ describe('unsupported input diagnostics', () => {
       '- bad-header.csv: unsupported CSV header\n  Expected:',
     );
     await expect(new CsvStatementSource(folder).load()).rejects.toThrow(
-      '- missing-currency.csv: unsupported filename\n  Expected: Filename containing `_AMD_` or `_USD_`',
+      '- missing-currency.csv: unsupported filename\n  Expected: Filename containing `_AMD_`, `_USD_`, or `_THB_`',
     );
   });
 });
