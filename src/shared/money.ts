@@ -25,10 +25,7 @@ export function formatUsd(minorUnits: bigint): string {
   return `${sign}${whole}.${fraction}`;
 }
 
-export function formatMoney(
-  minorUnits: bigint,
-  _currency: 'USD' | 'AMD' | 'THB',
-): string {
+export function formatMoney(minorUnits: bigint): string {
   return formatUsd(minorUnits);
 }
 

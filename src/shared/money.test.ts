@@ -15,8 +15,8 @@ describe('money helpers', () => {
     expect(formatUsd(-123450n)).toBe('-1234.50');
   });
 
-  it('formats THB totals', () => {
-    expect(formatMoney(12345n, 'THB')).toBe('123.45');
+  it('formats money amounts', () => {
+    expect(formatMoney(12345n)).toBe('123.45');
   });
 
   it('converts AMD to USD using the local deterministic rate', () => {

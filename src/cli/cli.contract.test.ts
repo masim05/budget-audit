@@ -154,4 +154,27 @@ describe('CLI contract', () => {
     expect(code).toBe(4);
     expect(stderr).toBe('stdout failed\n');
   });
+
+  it('accepts absolute paths for data directory', async () => {
+    const folder = await fixtureFolder();
+    let stdout = '';
+    const code = await runCli(
+      [
+        'audit',
+        '--data-dir',
+        folder,
+        '--from',
+        '2026-05-01',
+        '--to',
+        '2026-05-31',
+      ],
+      process.cwd(),
+      {
+        stdout: (value) => (stdout += value),
+        stderr: () => undefined,
+      },
+    );
+    expect(code).toBe(0);
+    expect(stdout).toContain('USD income total');
+  });
 });

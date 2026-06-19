@@ -15,14 +15,14 @@ export class TextClusterReportWriter {
     } else {
       for (const cluster of report.clusters) {
         lines.push(`Cluster: ${cluster.name}`);
-        lines.push(`Total: ฿${formatMoney(cluster.totalThb, 'THB')}`);
+        lines.push(`Total: ฿${formatMoney(cluster.totalThb)}`);
 
         if (verbose) {
           lines.push('');
           for (const transaction of cluster.transactions) {
             lines.push(
               /* v8 ignore next */
-              `  ${transaction.date} ${transaction.remitterOrBeneficiary} ฿${formatMoney(transaction.debit ?? 0n, 'THB')} (${transaction.details}) [${transaction.sourceFile}]`,
+              `  ${transaction.date} ${transaction.remitterOrBeneficiary} ฿${formatMoney(transaction.debit ?? 0n)} (${transaction.details}) [${transaction.sourceFile}]`,
             );
           }
         }
