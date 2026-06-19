@@ -40,7 +40,9 @@ export async function saveClusterConfig(
   // - clusters unique and sorted
   // Deterministic, locale-independent sort using code-point ordering
   const mappings = Object.fromEntries(
-    Object.entries(config.mappings ?? {}).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+    Object.entries(config.mappings ?? {})
+      .map(([k, v]) => [normalizeReceiver(k), v])
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
   );
   const patterns = (config.patterns ?? []).slice().sort((a, b) => {
     const pa = String(a.pattern);
