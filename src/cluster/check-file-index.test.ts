@@ -28,7 +28,7 @@ describe('buildCheckFileIndex', () => {
     expect(index.size).toBe(0);
   });
 
-  it('prefers longest transaction-like number and supports 1-2 digits', async () => {
+  it('indexes all numeric tokens and supports 1-2 digits', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     await writeFile(join(folder, '12345-receipt.pdf'), '', 'utf8');
     await writeFile(join(folder, 'IMG_67890.jpg'), '', 'utf8');
@@ -41,9 +41,11 @@ describe('buildCheckFileIndex', () => {
 
     expect(index.get('12345')).toEqual(['12345-receipt.pdf']);
     expect(index.get('67890')).toEqual(['IMG_67890.jpg']);
-    expect(index.get('9999')).toEqual(['12_slip_9999.jpg']); // Longest wins
+    // Both tokens from the same filename should be indexed
+    expect(index.get('9999')).toEqual(['12_slip_9999.jpg']);
     expect(index.get('99')).toEqual(['99slip.jpg']); // 2-digit supported
     expect(index.get('5')).toEqual(['5.jpg']); // 1-digit supported
-    expect(index.get('12')).toEqual(['file12.txt']); // 2-digit after text supported
+    // '12' appears in two files; sorted iteration makes listed order deterministic
+    expect(index.get('12')).toEqual(['12_slip_9999.jpg', 'file12.txt']); // 2-digit supported
   });
 });

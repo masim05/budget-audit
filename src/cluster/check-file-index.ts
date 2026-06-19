@@ -10,15 +10,13 @@ export async function buildCheckFileIndex(
     const matches = Array.from(fileName.matchAll(/(?:^|[^\d])(\d+)/g));
     if (matches.length === 0) continue;
     
-    // Prefer the longest number (most transaction-like)
-    // If equal length, prefer the first one
-    const txNumber = matches
-      .map((m) => m[1])
-      .reduce((longest, current) =>
-        current.length > longest.length ? current : longest
-      );
-    
-    index.set(txNumber, [...(index.get(txNumber) ?? []), fileName]);
+    // Index every numeric token found so exact lookups by transaction
+    // number can match even when filenames also contain dates, camera IDs,
+    // or page numbers.
+    for (const m of matches) {
+      const token = m[1];
+      index.set(token, [...(index.get(token) ?? []), fileName]);
+    }
   }
   return index;
 }
