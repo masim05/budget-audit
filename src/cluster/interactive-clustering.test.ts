@@ -292,4 +292,78 @@ describe('interactive clustering', () => {
       }),
     ).rejects.toThrow('Unknown cluster: nonexistent');
   });
+
+  it('rejects assignment to unknown cluster after create', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockResolvedValue(undefined);
+    const prompt = vi
+      .fn()
+      .mockResolvedValueOnce('create:food')
+      .mockResolvedValueOnce('assign:nonexistent');
+
+    await expect(
+      clusterOtherReceivers({
+        configPath,
+        config: { mappings: {}, patterns: [], clusters: ['Other'] },
+        receivers: [
+          {
+            normalizedReceiver: 'TEST VENDOR',
+            samples: [
+              {
+                transactionNumber: '6001',
+                statementFile: 'TH_THB_6001.csv',
+                checkFile: null,
+              },
+            ],
+          },
+        ],
+        prompt,
+        runGit,
+      }),
+    ).rejects.toThrow('Unknown cluster: nonexistent');
+  });
+
+  it('propagates git command errors during commit', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n  - "food"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockRejectedValue(new Error('git failed'));
+    const prompt = vi.fn().mockResolvedValueOnce('assign:food');
+
+    await expect(
+      clusterOtherReceivers({
+        configPath,
+        config: { mappings: {}, patterns: [], clusters: ['Other', 'food'] },
+        receivers: [
+          {
+            normalizedReceiver: 'TEST VENDOR',
+            samples: [
+              {
+                transactionNumber: '6001',
+                statementFile: 'TH_THB_6001.csv',
+                checkFile: null,
+              },
+            ],
+          },
+        ],
+        prompt,
+        runGit,
+      }),
+    ).rejects.toThrow('git failed');
+
+    // Verify runGit was actually called
+    expect(runGit).toHaveBeenCalled();
+  });
 });

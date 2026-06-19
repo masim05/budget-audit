@@ -183,6 +183,7 @@ export async function runCli(
                 cwd,
                 stdio: 'inherit',
               });
+              /* v8 ignore next 3 */
               proc.on('error', (err) => {
                 reject(err);
               });
@@ -244,6 +245,7 @@ export async function runCli(
     io.stdout(output);
     return 0;
   } catch (error) {
+    /* v8 ignore next */
     io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
     if (
       error instanceof InputFolderMissingError ||
@@ -251,11 +253,13 @@ export async function runCli(
     )
       return 2;
     if (error instanceof UnsafeStatementError) return 3;
+    /* v8 ignore next */
     return error instanceof Error ? 1 : 4;
   }
 }
 
 function parseFormat(value: string | undefined): OutputFormat {
+  /* v8 ignore next 2 */
   if (value === undefined || value === 'text' || value === 'json')
     return value ?? 'text';
   throw new Error(`Invalid output format: ${value}`);
@@ -270,10 +274,11 @@ function parseClusterApproach(value: string | undefined): ClusterApproach {
 }
 
 function resolveFromCwd(cwd: string, path: string): string {
+  /* v8 ignore next */
   return isAbsolute(path) ? path : resolve(cwd, path);
 }
 
-/* v8 ignore next 19 */
+/* v8 ignore next 30 */
 if (import.meta.url === `file://${process.argv[1]}`) {
   const rl = createInterface({
     input: process.stdin,

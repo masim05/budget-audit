@@ -340,10 +340,10 @@ clusters:
       proc.on('close', (code) => (code === 0 ? resolve() : reject()));
     });
 
-    // Create a config with only "Other" cluster
+    // Create a config with only "Other" cluster and "transport" cluster for the prompt
     await writeFile(
       join(config, 'clusters.yml'),
-      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n  - "transport"\n',
       'utf8',
     );
 
@@ -356,6 +356,10 @@ clusters:
 
     // Create a check file
     await writeFile(join(checks, '3001-slip.jpg'), '', 'utf8');
+
+    // Corrupt the git repo by removing .git/objects to cause git commands to fail
+    const { rmdir } = await import('node:fs/promises');
+    await rmdir(join(testDir, '.git', 'objects'), { recursive: true });
 
     let stderr = '';
     const code = await runCli(
@@ -371,7 +375,7 @@ clusters:
         '-t',
         '2026-05-31',
       ],
-      '/nonexistent/path/that/causes/spawn/error',
+      testDir,
       {
         stdout: () => undefined,
         stderr: (value) => (stderr += value),

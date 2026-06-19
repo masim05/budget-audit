@@ -42,4 +42,63 @@ describe('cluster config', () => {
     // Code-point ordering: 'ALFA' < 'BETA'
     expect(firstIndex).toBeLessThan(secondIndex);
   });
+
+  it('handles empty and null config values', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(configPath, '', 'utf8');
+
+    const config = await loadClusterConfig(configPath);
+    expect(config.mappings).toEqual({});
+    expect(config.patterns).toEqual([]);
+    expect(config.clusters).toEqual([]);
+
+    await saveClusterConfig(configPath, config);
+    const saved = await readFile(configPath, 'utf8');
+    expect(saved).toContain('mappings: {}');
+    expect(saved).toContain('patterns: []');
+    expect(saved).toContain('clusters: []');
+  });
+
+  it('sorts patterns deterministically when saving', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
+    const configPath = join(folder, 'subdir', 'clusters.yml');
+
+    await saveClusterConfig(configPath, {
+      mappings: {},
+      patterns: [
+        { pattern: '/zebra/i', cluster: 'z' },
+        { pattern: '/alpha/i', cluster: 'a' },
+        { pattern: '/beta/i', cluster: 'b' },
+        { pattern: '/alpha/i', cluster: 'a2' }, // Duplicate pattern to test equality
+      ],
+      clusters: ['a', 'b', 'z'],
+    });
+
+    const saved = await readFile(configPath, 'utf8');
+    const alphaIndex = saved.indexOf('/alpha/i');
+    const betaIndex = saved.indexOf('/beta/i');
+    const zebraIndex = saved.indexOf('/zebra/i');
+    expect(alphaIndex).toBeLessThan(betaIndex);
+    expect(betaIndex).toBeLessThan(zebraIndex);
+  });
+
+  it('handles duplicate mapping keys deterministically', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
+    const configPath = join(folder, 'clusters.yml');
+
+    await saveClusterConfig(configPath, {
+      mappings: {
+        'CAFE MARKET': 'food',
+        'cafe market': 'food2', // Same normalized key
+        LOTUS: 'groceries',
+      },
+      patterns: [],
+      clusters: ['food', 'food2', 'groceries'],
+    });
+
+    const saved = await readFile(configPath, 'utf8');
+    // Should have only one entry for the normalized key
+    expect(saved).toContain('CAFE MARKET');
+  });
 });

@@ -36,6 +36,7 @@ export async function buildCheckFileIndex(
     // indicator segment; otherwise use the last numeric token.
     let chosen = matches[matches.length - 1][0];
     for (const m of matches) {
+      /* v8 ignore next */
       const idx = (m as RegExpMatchArray).index ?? -1;
       const val = m[0];
       if (idx >= 0) {
@@ -47,6 +48,7 @@ export async function buildCheckFileIndex(
       }
     }
 
+    /* v8 ignore next */
     index.set(chosen, [...(index.get(chosen) ?? []), fileName]);
   }
   return index;

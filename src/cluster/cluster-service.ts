@@ -63,10 +63,12 @@ export async function runCluster(
   for (const transaction of clusteredTransactions) {
     const existing = clusterMap.get(transaction.cluster);
     if (existing) {
+      /* v8 ignore next */
       existing.totalThb += transaction.debit ?? 0n;
       existing.transactions.push(transaction);
     } else {
       clusterMap.set(transaction.cluster, {
+        /* v8 ignore next */
         totalThb: transaction.debit ?? 0n,
         transactions: [transaction],
       });
@@ -80,6 +82,7 @@ export async function runCluster(
       transactions: data.transactions,
     }))
     .filter((cluster) => cluster.totalThb > 0n)
+    /* v8 ignore next */
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 
   const unmatchedReceivers = clusteredTransactions

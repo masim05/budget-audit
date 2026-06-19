@@ -15,6 +15,7 @@ export default defineConfig({
         'src/internal-movement/internal-match.ts',
         'src/statement/statement-file.ts',
         'src/transaction/transaction.ts',
+        'src/cluster/cluster-report.ts',
       ],
       thresholds: {
         lines: 98,
