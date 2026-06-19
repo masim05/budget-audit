@@ -8,6 +8,7 @@
   },
   "scripts": {
     "audit": "node dist/cli/main.js audit",
+    "cluster": "node dist/cli/main.js cluster",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "format:check": "prettier --check src tests examples README.md package.json tsconfig.json eslint.config.js prettier.config.js vitest.config.ts",

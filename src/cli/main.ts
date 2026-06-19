@@ -18,14 +18,25 @@ import {
   writeOptionalOutput,
   type OutputFormat,
 } from './output.js';
+import {
+  loadClusterConfig,
+  runCluster,
+  TextClusterReportWriter,
+  type ClusterApproach,
+} from '../cluster/index.js';
 
 const cliOptions = {
   'data-dir': { type: 'string' },
+  'statements-folder': { type: 'string' },
+  'checks-folder': { type: 'string' },
   from: { type: 'string', short: 'f' },
   to: { type: 'string', short: 't' },
   'matching-mode': { type: 'string' },
   format: { type: 'string' },
   output: { type: 'string', short: 'o' },
+  approach: { type: 'string' },
+  'cluster-other': { type: 'string' },
+  verbose: { type: 'boolean', short: 'v' },
   help: { type: 'boolean', short: 'h' },
 } as const;
 
@@ -39,6 +50,19 @@ Options:
   --format <format>        Output format: text or json (default: text)
   -o, --output <path>      Write the report to a file
   -h, --help               Show this help message
+`;
+
+const clusterHelpMessage = `Usage: budget-audit cluster [options]
+
+Options:
+  --statements-folder <path>  Statement folder path (default: ./data/statements)
+  --checks-folder <path>      Checks folder path (default: ./data/checks)
+  -f, --from <date>           Audit range start date (YYYY-MM-DD)
+  -t, --to <date>             Audit range end date (YYYY-MM-DD)
+  --approach <mode>           Clustering approach: deterministic or hybrid (default: deterministic)
+  --cluster-other <name>      Cluster name for unmatched receivers (default: Other)
+  -v, --verbose               Show detailed transaction information
+  -h, --help                  Show this help message
 `;
 
 export interface CliIo {
@@ -59,11 +83,46 @@ export async function runCli(
     });
     const command = positionals[0];
     if (values.help === true) {
+      if (command === 'cluster') {
+        io.stdout(clusterHelpMessage);
+        return 0;
+      }
       if (command !== undefined && command !== 'audit')
-        throw new Error('Expected command: audit');
+        throw new Error('Expected command: audit or cluster');
       io.stdout(helpMessage);
       return 0;
     }
+
+    if (command === 'cluster') {
+      const defaultRange = previousFullCalendarMonth();
+      const dateRange = validateDateRange(
+        values.from ?? defaultRange.from,
+        values.to ?? defaultRange.to,
+      );
+      const statementsFolder = resolveFromCwd(
+        cwd,
+        values['statements-folder'] ?? './data/statements',
+      );
+      const checksFolder = resolveFromCwd(
+        cwd,
+        values['checks-folder'] ?? './data/checks',
+      );
+      const report = await runCluster({
+        statementsFolder,
+        checksFolder,
+        dateRange,
+        approach: parseClusterApproach(values.approach),
+        statementSource: new CsvStatementSource(statementsFolder),
+        config: await loadClusterConfig(
+          resolveFromCwd(cwd, './config/clusters.yml'),
+        ),
+      });
+      io.stdout(
+        new TextClusterReportWriter().write(report, values.verbose === true),
+      );
+      return 0;
+    }
+
     if (command !== 'audit') throw new Error('Expected command: audit');
     const defaultRange = previousFullCalendarMonth();
     const dateRange = validateDateRange(
@@ -105,6 +164,12 @@ function parseFormat(value: string | undefined): OutputFormat {
   if (value === undefined || value === 'text' || value === 'json')
     return value ?? 'text';
   throw new Error(`Invalid output format: ${value}`);
+}
+
+function parseClusterApproach(value: string | undefined): ClusterApproach {
+  if (value === undefined || value === 'deterministic' || value === 'hybrid')
+    return value ?? 'deterministic';
+  throw new Error(`Invalid cluster approach: ${value}`);
 }
 
 function resolveFromCwd(cwd: string, path: string): string {

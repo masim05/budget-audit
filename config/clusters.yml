@@ -1,10 +1,12 @@
 mappings:
+  "Cafe Market": "food"
   "COMPANY LTD": "дом"
   "OIL STATION #12": "бензин + мойка"
 patterns:
   - pattern: "/^CAF/i"
     cluster: "кафе/рестораны"
 clusters:
+  - "food"
   - "дом"
   - "склад"
   - "машина аренда"
