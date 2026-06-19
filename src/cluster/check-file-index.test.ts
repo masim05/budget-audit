@@ -28,11 +28,11 @@ describe('buildCheckFileIndex', () => {
     expect(index.size).toBe(0);
   });
 
-  it('indexes all numeric tokens and supports 1-2 digits', async () => {
+  it('indexes the last numeric token and supports 1-2 digits', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     await writeFile(join(folder, '12345-receipt.pdf'), '', 'utf8');
     await writeFile(join(folder, 'IMG_67890.jpg'), '', 'utf8');
-    await writeFile(join(folder, '12_slip_9999.jpg'), '', 'utf8'); // Should prefer 9999 over 12
+    await writeFile(join(folder, '12_slip_9999.jpg'), '', 'utf8'); // last token 9999
     await writeFile(join(folder, '99slip.jpg'), '', 'utf8'); // 2-digit at start
     await writeFile(join(folder, '5.jpg'), '', 'utf8'); // 1-digit at start
     await writeFile(join(folder, 'file12.txt'), '', 'utf8'); // 2 digits after text
@@ -41,11 +41,10 @@ describe('buildCheckFileIndex', () => {
 
     expect(index.get('12345')).toEqual(['12345-receipt.pdf']);
     expect(index.get('67890')).toEqual(['IMG_67890.jpg']);
-    // Both tokens from the same filename should be indexed
     expect(index.get('9999')).toEqual(['12_slip_9999.jpg']);
     expect(index.get('99')).toEqual(['99slip.jpg']); // 2-digit supported
     expect(index.get('5')).toEqual(['5.jpg']); // 1-digit supported
-    // '12' appears in two files; sorted iteration makes listed order deterministic
-    expect(index.get('12')).toEqual(['12_slip_9999.jpg', 'file12.txt']); // 2-digit supported
+    // '12' should only include file12.txt because 12_slip_9999.jpg indexes as 9999
+    expect(index.get('12')).toEqual(['file12.txt']);
   });
 });
