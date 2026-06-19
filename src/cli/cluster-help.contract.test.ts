@@ -11,8 +11,8 @@ describe('cluster help contract', () => {
 
     expect(code).toBe(0);
     expect(stdout).toContain('Usage: budget-audit cluster');
-    expect(stdout).toContain('--statements-folder');
-    expect(stdout).toContain('--checks-folder');
+    expect(stdout).toContain('-sf, --statements-folder');
+    expect(stdout).toContain('-cf, --checks-folder');
     expect(stdout).toContain('--from');
     expect(stdout).toContain('--to');
     expect(stdout).toContain('--approach');

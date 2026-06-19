@@ -23,6 +23,39 @@ describe('cluster CLI contract', () => {
     const code = await runCli(
       [
         'cluster',
+        '-sf',
+        statements,
+        '-cf',
+        checks,
+        '-f',
+        '2026-05-01',
+        '-t',
+        '2026-05-31',
+      ],
+      process.cwd(),
+      { stdout: (value) => (stdout += value), stderr: () => undefined },
+    );
+
+    expect(code).toBe(0);
+    expect(stdout).toContain('Cluster:');
+    expect(stdout).toContain('food');
+  });
+
+  it('runs the cluster command with long folder options', async () => {
+    const statements = await mkdtemp(
+      join(tmpdir(), 'budget-audit-statements-'),
+    );
+    const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+    await writeFile(
+      join(statements, 'TH_THB_1001.csv'),
+      `${header}\n2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing\n`,
+      'utf8',
+    );
+
+    let stdout = '';
+    const code = await runCli(
+      [
+        'cluster',
         '--statements-folder',
         statements,
         '--checks-folder',
@@ -39,6 +72,38 @@ describe('cluster CLI contract', () => {
     expect(code).toBe(0);
     expect(stdout).toContain('Cluster:');
     expect(stdout).toContain('food');
+  });
+
+  it('rejects --cluster-other with not-yet-supported error', async () => {
+    const statements = await mkdtemp(
+      join(tmpdir(), 'budget-audit-statements-'),
+    );
+    const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+
+    let stderr = '';
+    const code = await runCli(
+      [
+        'cluster',
+        '-sf',
+        statements,
+        '-cf',
+        checks,
+        '--cluster-other',
+        '-f',
+        '2026-05-01',
+        '-t',
+        '2026-05-31',
+      ],
+      process.cwd(),
+      {
+        stdout: () => undefined,
+        stderr: (value) => (stderr += value),
+      },
+    );
+
+    expect(code).toBe(1);
+    expect(stderr).toContain('not yet supported');
+    expect(stderr).toContain('--cluster-other');
   });
 
   it('prints cluster help without loading statements', async () => {

@@ -35,7 +35,7 @@ const cliOptions = {
   format: { type: 'string' },
   output: { type: 'string', short: 'o' },
   approach: { type: 'string' },
-  'cluster-other': { type: 'string' },
+  'cluster-other': { type: 'boolean' },
   verbose: { type: 'boolean', short: 'v' },
   help: { type: 'boolean', short: 'h' },
 } as const;
@@ -55,19 +55,34 @@ Options:
 const clusterHelpMessage = `Usage: budget-audit cluster [options]
 
 Options:
-  --statements-folder <path>  Statement folder path (default: ./data/statements)
-  --checks-folder <path>      Checks folder path (default: ./data/checks)
-  -f, --from <date>           Audit range start date (YYYY-MM-DD)
-  -t, --to <date>             Audit range end date (YYYY-MM-DD)
-  --approach <mode>           Clustering approach: deterministic or hybrid (default: deterministic)
-  --cluster-other <name>      Cluster name for unmatched receivers (default: Other)
-  -v, --verbose               Show detailed transaction information
-  -h, --help                  Show this help message
+  -sf, --statements-folder <path>  Statement folder path (default: ./data/statements)
+  -cf, --checks-folder <path>      Checks folder path (default: ./data/checks)
+  -f, --from <date>                Audit range start date (YYYY-MM-DD)
+  -t, --to <date>                  Audit range end date (YYYY-MM-DD)
+  --approach <mode>                Clustering approach: deterministic or hybrid (default: deterministic)
+  --cluster-other                  Enable interactive clustering for unmatched receivers (not yet supported)
+  -v, --verbose                    Show detailed transaction information
+  -h, --help                       Show this help message
 `;
 
 export interface CliIo {
   stdout: (value: string) => void;
   stderr: (value: string) => void;
+}
+
+function normalizeArgv(argv: string[]): string[] {
+  const normalized: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '-sf') {
+      normalized.push('--statements-folder');
+    } else if (arg === '-cf') {
+      normalized.push('--checks-folder');
+    } else {
+      normalized.push(arg);
+    }
+  }
+  return normalized;
 }
 
 export async function runCli(
@@ -76,8 +91,9 @@ export async function runCli(
   io: CliIo,
 ): Promise<number> {
   try {
+    const normalizedArgv = normalizeArgv(argv);
     const { positionals, values } = parseArgs({
-      args: argv,
+      args: normalizedArgv,
       allowPositionals: true,
       options: cliOptions,
     });
@@ -94,6 +110,11 @@ export async function runCli(
     }
 
     if (command === 'cluster') {
+      if (values['cluster-other'] === true) {
+        throw new Error(
+          'Interactive clustering (--cluster-other) is not yet supported. This feature is planned for a future release.',
+        );
+      }
       const defaultRange = previousFullCalendarMonth();
       const dateRange = validateDateRange(
         values.from ?? defaultRange.from,
