@@ -1,16 +1,12 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { clusterOtherReceivers } from './interactive-clustering.js';
 
 describe('interactive clustering', () => {
   it('persists new assignments and auto-commits config changes', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'interactive-clustering-test-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     const configPath = join(folder, 'clusters.yml');
     await writeFile(
       configPath,
@@ -54,12 +50,7 @@ describe('interactive clustering', () => {
   });
 
   it('includes transaction and check context in prompts', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'interactive-clustering-context-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     const configPath = join(folder, 'clusters.yml');
     await writeFile(
       configPath,
@@ -107,12 +98,7 @@ describe('interactive clustering', () => {
   });
 
   it('skips receivers with skip action', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'interactive-clustering-skip-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     const configPath = join(folder, 'clusters.yml');
     await writeFile(
       configPath,
@@ -148,12 +134,7 @@ describe('interactive clustering', () => {
   });
 
   it('creates cluster and assigns in single flow', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'interactive-clustering-create-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     const configPath = join(folder, 'clusters.yml');
     await writeFile(
       configPath,
@@ -191,12 +172,7 @@ describe('interactive clustering', () => {
   });
 
   it('assigns directly to existing cluster', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'interactive-clustering-direct-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     const configPath = join(folder, 'clusters.yml');
     await writeFile(
       configPath,
@@ -232,12 +208,7 @@ describe('interactive clustering', () => {
   });
 
   it('does not commit when all receivers are skipped', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'interactive-clustering-all-skip-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     const configPath = join(folder, 'clusters.yml');
     await writeFile(
       configPath,
@@ -282,5 +253,39 @@ describe('interactive clustering', () => {
 
     expect(Object.keys(updated.mappings)).toHaveLength(0);
     expect(runGit).not.toHaveBeenCalled();
+  });
+
+  it('rejects assignment to unknown cluster', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
+    const configPath = join(folder, 'clusters.yml');
+    await writeFile(
+      configPath,
+      'mappings: {}\npatterns: []\nclusters:\n  - "Other"\n',
+      'utf8',
+    );
+
+    const runGit = vi.fn().mockResolvedValue(undefined);
+    const prompt = vi.fn().mockResolvedValueOnce('assign:nonexistent');
+
+    await expect(
+      clusterOtherReceivers({
+        configPath,
+        config: { mappings: {}, patterns: [], clusters: ['Other'] },
+        receivers: [
+          {
+            normalizedReceiver: 'TEST VENDOR',
+            samples: [
+              {
+                transactionNumber: '6001',
+                statementFile: 'TH_THB_6001.csv',
+                checkFile: null,
+              },
+            ],
+          },
+        ],
+        prompt,
+        runGit,
+      }),
+    ).rejects.toThrow('Unknown cluster: nonexistent');
   });
 });

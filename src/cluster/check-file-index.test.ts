@@ -1,16 +1,12 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildCheckFileIndex } from './check-file-index.js';
 
 describe('buildCheckFileIndex', () => {
   it('indexes check files by transaction number', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'check-file-index-test-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     await writeFile(join(folder, '1001-slip.jpg'), '', 'utf8');
     await writeFile(join(folder, '1001-receipt.pdf'), '', 'utf8');
     await writeFile(join(folder, '2002-slip.jpg'), '', 'utf8');
@@ -24,12 +20,7 @@ describe('buildCheckFileIndex', () => {
   });
 
   it('returns empty map for folder with no check files', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'check-file-index-empty-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     await writeFile(join(folder, 'readme.txt'), '', 'utf8');
 
     const index = await buildCheckFileIndex(folder);
@@ -37,23 +28,22 @@ describe('buildCheckFileIndex', () => {
     expect(index.size).toBe(0);
   });
 
-  it('extracts transaction numbers at word boundaries safely', async () => {
-    const folder = join(
-      process.cwd(),
-      'test-output',
-      'check-file-index-boundary-' + Date.now(),
-    );
-    await mkdir(folder, { recursive: true });
+  it('prefers longest transaction-like number and supports 1-2 digits', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'budget-audit-'));
     await writeFile(join(folder, '12345-receipt.pdf'), '', 'utf8');
     await writeFile(join(folder, 'IMG_67890.jpg'), '', 'utf8');
-    await writeFile(join(folder, 'file12.txt'), '', 'utf8'); // Should not match (only 2 digits)
-    await writeFile(join(folder, '999slip.jpg'), '', 'utf8'); // Should match at start
+    await writeFile(join(folder, '12_slip_9999.jpg'), '', 'utf8'); // Should prefer 9999 over 12
+    await writeFile(join(folder, '99slip.jpg'), '', 'utf8'); // 2-digit at start
+    await writeFile(join(folder, '5.jpg'), '', 'utf8'); // 1-digit at start
+    await writeFile(join(folder, 'file12.txt'), '', 'utf8'); // 2 digits after text
 
     const index = await buildCheckFileIndex(folder);
 
     expect(index.get('12345')).toEqual(['12345-receipt.pdf']);
     expect(index.get('67890')).toEqual(['IMG_67890.jpg']);
-    expect(index.get('999')).toEqual(['999slip.jpg']);
-    expect(index.has('12')).toBe(false); // Too short
+    expect(index.get('9999')).toEqual(['12_slip_9999.jpg']); // Longest wins
+    expect(index.get('99')).toEqual(['99slip.jpg']); // 2-digit supported
+    expect(index.get('5')).toEqual(['5.jpg']); // 1-digit supported
+    expect(index.get('12')).toEqual(['file12.txt']); // 2-digit after text supported
   });
 });

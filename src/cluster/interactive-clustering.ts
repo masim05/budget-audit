@@ -54,14 +54,18 @@ export async function clusterOtherReceivers(
         `Assign ${receiver.normalizedReceiver}`,
       );
       if (assignChoice.startsWith('assign:')) {
-        next.mappings[receiver.normalizedReceiver] = assignChoice.slice(
-          'assign:'.length,
-        );
+        const targetCluster = assignChoice.slice('assign:'.length);
+        if (!next.clusters.includes(targetCluster)) {
+          throw new Error(`Unknown cluster: ${targetCluster}`);
+        }
+        next.mappings[receiver.normalizedReceiver] = targetCluster;
       }
     } else if (firstChoice.startsWith('assign:')) {
-      next.mappings[receiver.normalizedReceiver] = firstChoice.slice(
-        'assign:'.length,
-      );
+      const targetCluster = firstChoice.slice('assign:'.length);
+      if (!next.clusters.includes(targetCluster)) {
+        throw new Error(`Unknown cluster: ${targetCluster}`);
+      }
+      next.mappings[receiver.normalizedReceiver] = targetCluster;
       changed = true;
     }
   }
