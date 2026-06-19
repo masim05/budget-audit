@@ -14,6 +14,7 @@ describe('CLI help contract', () => {
     const code = await runCli(argv, process.cwd(), {
       stdout: (value) => (stdout += value),
       stderr: (value) => (stderr += value),
+      prompt: async () => 'skip',
     });
 
     expect(code).toBe(0);
@@ -38,6 +39,7 @@ describe('CLI help contract', () => {
       {
         stdout: (value) => (stdout += value),
         stderr: (value) => (stderr += value),
+        prompt: async () => 'skip',
       },
     );
 
@@ -53,10 +55,30 @@ describe('CLI help contract', () => {
     const code = await runCli(['wrong', '-h'], process.cwd(), {
       stdout: (value) => (stdout += value),
       stderr: (value) => (stderr += value),
+      prompt: async () => 'skip',
     });
 
     expect(code).toBe(1);
     expect(stdout).toBe('');
-    expect(stderr).toContain('Expected command: audit');
+    expect(stderr).toContain('Expected command: audit or cluster');
+  });
+
+  it('prints cluster help with --help flag', async () => {
+    let stdout = '';
+    let stderr = '';
+
+    const code = await runCli(['cluster', '--help'], process.cwd(), {
+      stdout: (value) => (stdout += value),
+      stderr: (value) => (stderr += value),
+      prompt: async () => 'skip',
+    });
+
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    expect(stdout).toContain('Usage: budget-audit cluster');
+    expect(stdout).toContain('--statements-folder');
+    expect(stdout).toContain('--checks-folder');
+    expect(stdout).toContain('--cluster-other');
+    expect(stdout).toContain('--approach');
   });
 });

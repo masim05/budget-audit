@@ -9,20 +9,22 @@ const header =
 
 describe('cluster CLI contract', () => {
   it('runs the cluster command with statement and checks folder aliases', async () => {
-    const statements = await mkdtemp(
-      join(tmpdir(), 'budget-audit-statements-'),
-    );
-    const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+    const testDir = await mkdtemp(join(tmpdir(), 'budget-audit-test-'));
+    const statements = join(testDir, 'statements');
+    const checks = join(testDir, 'checks');
+    const config = join(testDir, 'config');
+    await mkdir(statements);
+    await mkdir(checks);
+    await mkdir(config);
+
     await writeFile(
       join(statements, 'TH_THB_1001.csv'),
       `${header}\n2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing\n`,
       'utf8',
     );
 
-    // Ensure default config exists in cwd for contract tests
-    await mkdir(join(process.cwd(), 'config'), { recursive: true });
     await writeFile(
-      join(process.cwd(), 'config', 'clusters.yml'),
+      join(config, 'clusters.yml'),
       `mappings: {}
 patterns: []
 clusters:
@@ -45,7 +47,7 @@ clusters:
         '-t',
         '2026-05-31',
       ],
-      process.cwd(),
+      testDir,
       {
         stdout: (value) => (stdout += value),
         stderr: () => undefined,
@@ -58,20 +60,22 @@ clusters:
   });
 
   it('supports -co alias for --cluster-other', async () => {
-    const statements = await mkdtemp(
-      join(tmpdir(), 'budget-audit-statements-'),
-    );
-    const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+    const testDir = await mkdtemp(join(tmpdir(), 'budget-audit-test-'));
+    const statements = join(testDir, 'statements');
+    const checks = join(testDir, 'checks');
+    const config = join(testDir, 'config');
+    await mkdir(statements);
+    await mkdir(checks);
+    await mkdir(config);
+
     await writeFile(
       join(statements, 'TH_THB_1001.csv'),
       `${header}\n2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing\n`,
       'utf8',
     );
 
-    // Ensure default config exists in cwd for contract tests
-    await mkdir(join(process.cwd(), 'config'), { recursive: true });
     await writeFile(
-      join(process.cwd(), 'config', 'clusters.yml'),
+      join(config, 'clusters.yml'),
       `mappings: {}
 patterns: []
 clusters:
@@ -95,7 +99,7 @@ clusters:
         '-t',
         '2026-05-31',
       ],
-      process.cwd(),
+      testDir,
       {
         stdout: (value) => (stdout += value),
         stderr: () => undefined,
@@ -108,20 +112,22 @@ clusters:
   });
 
   it('runs the cluster command with long folder options', async () => {
-    const statements = await mkdtemp(
-      join(tmpdir(), 'budget-audit-statements-'),
-    );
-    const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+    const testDir = await mkdtemp(join(tmpdir(), 'budget-audit-test-'));
+    const statements = join(testDir, 'statements');
+    const checks = join(testDir, 'checks');
+    const config = join(testDir, 'config');
+    await mkdir(statements);
+    await mkdir(checks);
+    await mkdir(config);
+
     await writeFile(
       join(statements, 'TH_THB_1001.csv'),
       `${header}\n2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing\n`,
       'utf8',
     );
 
-    // Ensure default config exists in cwd for contract tests
-    await mkdir(join(process.cwd(), 'config'), { recursive: true });
     await writeFile(
-      join(process.cwd(), 'config', 'clusters.yml'),
+      join(config, 'clusters.yml'),
       `mappings: {}
 patterns: []
 clusters:
@@ -144,7 +150,7 @@ clusters:
         '-t',
         '2026-05-31',
       ],
-      process.cwd(),
+      testDir,
       {
         stdout: (value) => (stdout += value),
         stderr: () => undefined,
@@ -157,20 +163,22 @@ clusters:
   });
 
   it('supports --cluster-other with no unmatched receivers', async () => {
-    const statements = await mkdtemp(
-      join(tmpdir(), 'budget-audit-statements-'),
-    );
-    const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+    const testDir = await mkdtemp(join(tmpdir(), 'budget-audit-test-'));
+    const statements = join(testDir, 'statements');
+    const checks = join(testDir, 'checks');
+    const config = join(testDir, 'config');
+    await mkdir(statements);
+    await mkdir(checks);
+    await mkdir(config);
+
     await writeFile(
       join(statements, 'TH_THB_1001.csv'),
       `${header}\n2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing\n`,
       'utf8',
     );
 
-    // Ensure default config exists in cwd for contract tests
-    await mkdir(join(process.cwd(), 'config'), { recursive: true });
     await writeFile(
-      join(process.cwd(), 'config', 'clusters.yml'),
+      join(config, 'clusters.yml'),
       `mappings: {}
 patterns: []
 clusters:
@@ -194,7 +202,7 @@ clusters:
         '-t',
         '2026-05-31',
       ],
-      process.cwd(),
+      testDir,
       {
         stdout: (value) => (stdout += value),
         stderr: () => undefined,
@@ -376,19 +384,22 @@ clusters:
   });
 
   it('rejects invalid cluster approach values', async () => {
-    const statements = await mkdtemp(
-      join(tmpdir(), 'budget-audit-statements-'),
-    );
-    const checks = await mkdtemp(join(tmpdir(), 'budget-audit-checks-'));
+    const testDir = await mkdtemp(join(tmpdir(), 'budget-audit-test-'));
+    const statements = join(testDir, 'statements');
+    const checks = join(testDir, 'checks');
+    const config = join(testDir, 'config');
+    await mkdir(statements);
+    await mkdir(checks);
+    await mkdir(config);
+
     await writeFile(
       join(statements, 'TH_THB_1001.csv'),
       `${header}\n2026-05-15,Card,1001,ACC,0.00,123.45,0.00,0.00,Cafe Market,Lunch,Outgoing\n`,
       'utf8',
     );
 
-    await mkdir(join(process.cwd(), 'config'), { recursive: true });
     await writeFile(
-      join(process.cwd(), 'config', 'clusters.yml'),
+      join(config, 'clusters.yml'),
       `mappings: {}
 patterns: []
 clusters:
@@ -413,7 +424,7 @@ clusters:
         '-t',
         '2026-05-31',
       ],
-      process.cwd(),
+      testDir,
       {
         stdout: () => undefined,
         stderr: (value) => (stderr += value),

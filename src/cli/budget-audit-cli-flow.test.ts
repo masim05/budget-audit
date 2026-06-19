@@ -32,6 +32,7 @@ describe('budget-audit CLI flow', () => {
       {
         stdout: (value) => (stdout += value),
         stderr: () => undefined,
+        prompt: async () => 'skip',
       },
     );
     expect(code).toBe(0);
