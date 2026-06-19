@@ -38,12 +38,15 @@ export async function saveClusterConfig(
   // - mappings sorted by normalized receiver key
   // - patterns sorted by pattern string
   // - clusters unique and sorted
+  // Deterministic, locale-independent sort using code-point ordering
   const mappings = Object.fromEntries(
-    Object.entries(config.mappings ?? {}).sort(([a], [b]) => a.localeCompare(b)),
+    Object.entries(config.mappings ?? {}).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
   );
-  const patterns = (config.patterns ?? []).slice().sort((a, b) =>
-    String(a.pattern).localeCompare(String(b.pattern)),
-  );
+  const patterns = (config.patterns ?? []).slice().sort((a, b) => {
+    const pa = String(a.pattern);
+    const pb = String(b.pattern);
+    return pa < pb ? -1 : pa > pb ? 1 : 0;
+  });
   const clusters = Array.from(new Set(config.clusters ?? [])).sort();
 
   const canonical = { mappings, patterns, clusters };
