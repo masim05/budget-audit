@@ -278,17 +278,27 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     output: process.stdout,
   });
 
-  const code = await runCli(process.argv.slice(2), process.cwd(), {
-    stdout: (value) => process.stdout.write(value),
-    stderr: (value) => process.stderr.write(value),
-    prompt: (question: string) => {
-      return new Promise((resolve) => {
-        rl.question(question + ' ', (answer) => {
-          resolve(answer);
+  let code = 1;
+  try {
+    code = await runCli(process.argv.slice(2), process.cwd(), {
+      stdout: (value) => process.stdout.write(value),
+      stderr: (value) => process.stderr.write(value),
+      prompt: (question: string) => {
+        return new Promise((resolve) => {
+          rl.question(question + ' ', (answer) => {
+            resolve(answer);
+          });
         });
-      });
-    },
-  });
-  rl.close();
+      },
+    });
+  } finally {
+    // Ensure the readline interface is always closed even if runCli throws
+    try {
+      rl.close();
+    } catch {
+      // ignore errors closing
+    }
+  }
+
   process.exitCode = code;
 }
