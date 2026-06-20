@@ -1,5 +1,24 @@
 # Contributing
 
+## Work Item Artifact Location Rules
+
+All work-item artifacts must be created and maintained in the matching directory:
+
+- `specs/<id>-<work-item-short-name>/`
+
+This includes all related artifacts such as:
+
+- `spec.md`
+- `plan.md`
+- `tasks.md`
+- `research.md`
+- `data-model.md`
+- `quickstart.md`
+- `checklists/`
+- `contracts/`
+
+Do not place work-item artifacts outside their matching `specs/<id>-<work-item-short-name>/` directory.
+
 ## Worktree Rules
 
 All implementation work must be done in Git worktrees.
