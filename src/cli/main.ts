@@ -63,6 +63,10 @@ Examples:
   budget-audit cluster -f 2026-05-01 -t 2026-05-31
   budget-audit cluster -a d --verbose
   budget-audit cluster --cluster-other
+
+  npm run cluster -- -f 2026-05-01 -t 2026-05-31
+  npm run cluster -- -a d --verbose
+  npm run cluster -- --cluster-other
 `;
 
 export interface CliIo {

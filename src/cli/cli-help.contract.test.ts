@@ -7,7 +7,7 @@ describe('CLI help contract', () => {
     ['audit -h', ['audit', '-h']],
     ['--help', ['--help']],
     ['-h', ['-h']],
-  ])('prints help for %s', async (_label, argv) => {
+  ])('prints audit help for %s', async (_label, argv) => {
     let stdout = '';
     let stderr = '';
 
@@ -26,6 +26,27 @@ describe('CLI help contract', () => {
     expect(stdout).toContain('--format');
     expect(stdout).toContain('-o, --output');
     expect(stdout).toContain('-h, --help');
+  });
+
+  it.each([
+    ['cluster --help', ['cluster', '--help']],
+    ['cluster -h', ['cluster', '-h']],
+  ])('prints cluster help for %s', async (_label, argv) => {
+    let stdout = '';
+    let stderr = '';
+
+    const code = await runCli(argv, process.cwd(), {
+      stdout: (value) => (stdout += value),
+      stderr: (value) => (stderr += value),
+    });
+
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    expect(stdout).toContain('Usage: budget-audit cluster');
+    expect(stdout).toContain('-f, --from');
+    expect(stdout).toContain('-t, --to');
+    expect(stdout).toContain('-h, --help');
+    expect(stdout).toContain('npm run cluster');
   });
 
   it('prints help without requiring statement inputs or running an audit', async () => {
