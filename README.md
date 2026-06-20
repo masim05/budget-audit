@@ -9,6 +9,10 @@ npm install
 npm run build
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution rules, including required worktree usage and testing expectations.
+
 ## Run
 
 For local development, run the CLI through npm after building:
