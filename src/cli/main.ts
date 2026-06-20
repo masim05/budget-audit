@@ -90,8 +90,14 @@ export async function runCli(
       else throw new Error('Expected command: audit or cluster');
       return 0;
     }
-    if (command === 'audit') return await runAuditCommand(values, cwd, io);
-    if (command === 'cluster') return await runClusterCli(values, cwd, io);
+    if (command === 'audit') {
+      validateNoClusterOptions(values);
+      return await runAuditCommand(values, cwd, io);
+    }
+    if (command === 'cluster') {
+      validateNoAuditOptions(values);
+      return await runClusterCli(values, cwd, io);
+    }
     throw new Error('Expected command: audit or cluster');
   } catch (error) {
     io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
@@ -171,6 +177,33 @@ function parseFormat(value: string | undefined): OutputFormat {
   if (value === undefined || value === 'text' || value === 'json')
     return value ?? 'text';
   throw new Error(`Invalid output format: ${value}`);
+}
+
+function validateNoClusterOptions(
+  values: Record<string, string | boolean | undefined>,
+): void {
+  if (
+    values['statements-folder'] !== undefined ||
+    values['checks-folder'] !== undefined ||
+    values.approach !== undefined ||
+    values['cluster-other'] !== undefined ||
+    values.verbose !== undefined
+  ) {
+    throw new Error('Unexpected cluster-only options for audit command');
+  }
+}
+
+function validateNoAuditOptions(
+  values: Record<string, string | boolean | undefined>,
+): void {
+  if (
+    values['data-dir'] !== undefined ||
+    values['matching-mode'] !== undefined ||
+    values.format !== undefined ||
+    values.output !== undefined
+  ) {
+    throw new Error('Unexpected audit-only options for cluster command');
+  }
 }
 
 function resolveFromCwd(cwd: string, path: string): string {

@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { basename, dirname } from 'node:path';
+import { basename, dirname, relative } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { promisify } from 'node:util';
 import { findInternalMovements } from '../internal-movement/index.js';
@@ -148,7 +148,8 @@ function parseRegexLiteral(value: string): RegExp | undefined {
   const match = /^\/(.+)\/([dgimsuy]*)$/.exec(value.trim());
   if (!match) return undefined;
   try {
-    return new RegExp(match[1], match[2]);
+    const safeFlags = match[2].replace(/g/g, '');
+    return new RegExp(match[1], safeFlags);
   } catch {
     return undefined;
   }
@@ -500,8 +501,9 @@ async function commitClusterMapping(
   configPath: string,
   stderr: (value: string) => void,
 ): Promise<void> {
+  const configPathForGit = relative(cwd, configPath);
   try {
-    await execFileAsync('git', ['-C', cwd, 'add', configPath]);
+    await execFileAsync('git', ['-C', cwd, 'add', configPathForGit]);
     await execFileAsync('git', [
       '-C',
       cwd,
@@ -509,7 +511,7 @@ async function commitClusterMapping(
       '-m',
       'Update receiver clusters mapping',
       '--',
-      configPath,
+      configPathForGit,
     ]);
   } catch (error) {
     const message =
