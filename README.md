@@ -49,7 +49,7 @@ budget-audit cluster --cluster-other
 
 ## Spend Clusters
 
-Use `cluster` to group external spend transactions by payment receiver and print spend totals in THB.
+Use `cluster` to group external spend transactions by payment receiver and print spend totals in USD (AMD statement amounts are converted to USD for aggregation).
 
 - Mapping file path: `config/clusters.yml` (tracked in git)
 - Template: `config/clusters.example.yml`

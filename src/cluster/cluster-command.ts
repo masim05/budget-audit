@@ -5,6 +5,7 @@ import { createInterface } from 'node:readline/promises';
 import { promisify } from 'node:util';
 import { findInternalMovements } from '../internal-movement/index.js';
 import {
+  convertAmdToUsdMinor,
   isWithinDateRange,
   preferredAmount,
   previousFullCalendarMonth,
@@ -54,7 +55,7 @@ interface ClusteredSpend {
   receiver: string;
   normalizedReceiver: string;
   cluster: string;
-  amountMinor: bigint;
+  amountUsdMinor: bigint;
   statementFile: string;
   checkFile?: string;
 }
@@ -173,11 +174,22 @@ function clusterTransactions(
       receiver,
       normalizedReceiver,
       cluster,
-      amountMinor: preferredAmount(transaction.debitAmd, transaction.debit),
+      amountUsdMinor: transactionUsdAmount(transaction),
       statementFile: basename(transaction.sourceFile),
       checkFile: checkFileByTransaction.get(transaction.transactionNumber),
     };
   });
+}
+
+function transactionUsdAmount(transaction: Transaction): bigint {
+  const original = transaction.debit ?? 0n;
+  if (transaction.currency === 'USD') return original;
+  const normalizedAmd = preferredAmount(
+    transaction.debitAmd,
+    transaction.debit,
+  );
+  const amd = normalizedAmd !== 0n ? normalizedAmd : original;
+  return convertAmdToUsdMinor(amd);
 }
 
 function resolveCluster(
@@ -330,7 +342,7 @@ export function renderClusterReport(
     entries: entries.sort((left, right) =>
       left.transaction.date.localeCompare(right.transaction.date),
     ),
-    total: entries.reduce((sum, entry) => sum + entry.amountMinor, 0n),
+    total: entries.reduce((sum, entry) => sum + entry.amountUsdMinor, 0n),
   }));
   summaries.sort((left, right) => {
     if (left.total === right.total)
@@ -338,7 +350,7 @@ export function renderClusterReport(
     return left.total > right.total ? -1 : 1;
   });
 
-  const lines = ['Cluster summary (THB):'];
+  const lines = ['Cluster summary (USD):'];
   let total = 0n;
   for (const summary of summaries) {
     total += summary.total;
@@ -348,7 +360,7 @@ export function renderClusterReport(
       lines.push(`  ${formatVerboseTransactionLine(entry)}`);
     }
   }
-  lines.push(`Total spend (THB): ${formatMinorAmount(total)}`);
+  lines.push(`Total spend (USD): ${formatMinorAmount(total)}`);
   lines.push('');
   return lines.join('\n');
 }
@@ -362,7 +374,7 @@ function formatMinorAmount(minorUnits: bigint): string {
 }
 
 function formatVerboseTransactionLine(entry: ClusteredSpend): string {
-  return `${entry.transaction.date} 00:00 — ${formatMinorAmount(entry.amountMinor)} — ${entry.receiver} — ${entry.statementFile}${entry.checkFile ? ` — ${entry.checkFile}` : ''}`;
+  return `${entry.transaction.date} 00:00 — ${formatMinorAmount(entry.amountUsdMinor)} — ${entry.receiver} — ${entry.statementFile}${entry.checkFile ? ` — ${entry.checkFile}` : ''}`;
 }
 
 async function loadClusterConfig(path: string): Promise<ClusterConfig> {

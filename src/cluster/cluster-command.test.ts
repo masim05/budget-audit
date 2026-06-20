@@ -83,10 +83,10 @@ describe('runClusterCommand', () => {
       stderr: () => undefined,
     });
 
-    expect(output).toContain('Cluster summary (THB):');
+    expect(output).toContain('Cluster summary (USD):');
     expect(output).toContain('- Дом: 5.00');
     expect(output).toContain('- кафе/рестораны: 6.00');
-    expect(output).toContain('Total spend (THB): 11.00');
+    expect(output).toContain('Total spend (USD): 11.00');
   });
 
   it('uses fuzzy fallback in hybrid mode and prints verbose rows', async () => {

@@ -80,11 +80,11 @@ describe('cluster CLI contract', () => {
 
     expect(code).toBe(0);
     expect(stderr).toBe('');
-    expect(stdout).toContain('Cluster summary (THB):');
-    expect(stdout).toContain('- supermarkets: 80000.00');
-    expect(stdout).toContain('Total spend (THB): 80000.00');
+    expect(stdout).toContain('Cluster summary (USD):');
+    expect(stdout).toContain('- supermarkets: 200.00');
+    expect(stdout).toContain('Total spend (USD): 200.00');
     expect(stdout).toContain(
-      '2026-05-16 00:00 — 80000.00 — Shop — IE_AMD_5600.csv — receipt-002.png',
+      '2026-05-16 00:00 — 200.00 — Shop — IE_AMD_5600.csv — receipt-002.png',
     );
   });
 
