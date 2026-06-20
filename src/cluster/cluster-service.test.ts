@@ -3,11 +3,12 @@ import { runCluster } from './cluster-service.js';
 import type { ClusterConfig } from './cluster-config.js';
 import type { StatementSource } from '../statement/index.js';
 import type { Transaction } from '../transaction/index.js';
+import type { CheckParser } from '../checks/index.js';
 
 const config: ClusterConfig = {
   mappings: { 'CAFE MARKET': 'food' },
   patterns: [{ pattern: '/^LOTUS/i', cluster: 'groceries' }],
-  clusters: ['food', 'groceries', 'Other'],
+  clusters: ['food', 'groceries', 'other'],
 };
 
 describe('cluster service', () => {
@@ -39,13 +40,47 @@ describe('cluster service', () => {
           statementFiles: [],
           transactions: [
             tx({}),
-            tx({ id: '2', credit: 1000n, debit: 0n, directionType: 'Incoming' }),
+            tx({
+              id: '2',
+              credit: 1000n,
+              debit: 0n,
+              directionType: 'Incoming',
+            }),
             // internal movement candidate where counterpart is OUT OF RANGE (different date)
-            tx({ id: '3', transactionNumber: 'move', remitterOrBeneficiary: 'Own', debit: 5000n }),
-            tx({ id: '4', transactionNumber: 'move', date: '2026-06-01', accountNumber: 'ACC2', credit: 0n, debit: 0n, directionType: 'Incoming', creditAmd: 5000n }),
+            tx({
+              id: '3',
+              transactionNumber: 'move',
+              remitterOrBeneficiary: 'Own',
+              debit: 5000n,
+            }),
+            tx({
+              id: '4',
+              transactionNumber: 'move',
+              date: '2026-06-01',
+              accountNumber: 'ACC2',
+              credit: 0n,
+              debit: 0n,
+              directionType: 'Incoming',
+              creditAmd: 5000n,
+            }),
           ],
           warnings: [],
         };
+      },
+    };
+    const checkParser: CheckParser = {
+      async parseChecks() {
+        return [
+          {
+            filePath: '/tmp/2026-05-15 08-00-00.JPEG',
+            recipient: 'Cafe Market',
+            recipientEnglish: 'Cafe Market',
+            amountMinor: 12345n,
+            date: '2026-05-15',
+            time: '08:00',
+            warnings: [],
+          },
+        ];
       },
     };
 
@@ -55,15 +90,19 @@ describe('cluster service', () => {
       dateRange: { from: '2026-05-01', to: '2026-05-31' },
       approach: 'deterministic',
       statementSource: source,
+      checkParser,
       config,
     });
 
     expect(report.clusters).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: 'food', totalThb: 12345n }),
-        expect.objectContaining({ name: 'Other', totalThb: 5000n }),
+        expect.objectContaining({ name: 'other', totalThb: 5000n }),
       ]),
     );
     expect(report.unmatchedReceivers).toEqual(expect.arrayContaining(['Own']));
+    expect(report.otherRecipients).toEqual(
+      expect.arrayContaining([expect.objectContaining({ recipient: 'Own' })]),
+    );
   });
 });

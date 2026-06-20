@@ -24,7 +24,11 @@ npm run audit -- --data-dir ./data/statements --from 2026-05-01 --to 2026-05-31
 npm run audit -- -f 2026-05-01 -t 2026-05-31
 npm run audit -- --matching-mode permissive --format json --output reports/may-2026.json
 npm run audit -- -f 2026-05-01 -t 2026-05-31 -o reports/may-2026.json
+npm run cluster -- -f 2026-06-01 -t 2026-06-15
+npm run cluster -- -f 2026-06-01 -t 2026-06-15 -co
 ```
+
+Cluster command reads statement PDFs from `data/statements` and checks from `data/checks` by default, enriches recipients using OpenAI API (`OPENAI_API_KEY` in env or `.env`), and persists recipient-to-cluster mapping in `data/clusters/mapping.yml`.
 
 To make the `budget-audit` command available directly in your shell, link the package first:
 

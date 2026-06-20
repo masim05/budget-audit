@@ -18,7 +18,7 @@ describe('CLI help contract', () => {
 
     expect(code).toBe(0);
     expect(stderr).toBe('');
-    expect(stdout).toContain('Usage: budget-audit audit');
+    expect(stdout).toContain('Usage: budget-audit <command>');
     expect(stdout).toContain('--data-dir');
     expect(stdout).toContain('-f, --from');
     expect(stdout).toContain('-t, --to');
@@ -43,7 +43,7 @@ describe('CLI help contract', () => {
 
     expect(code).toBe(0);
     expect(stderr).toBe('');
-    expect(stdout).toContain('Usage: budget-audit audit');
+    expect(stdout).toContain('Usage: budget-audit <command>');
   });
 
   it('keeps unknown commands invalid even when help is requested', async () => {
@@ -57,6 +57,6 @@ describe('CLI help contract', () => {
 
     expect(code).toBe(1);
     expect(stdout).toBe('');
-    expect(stderr).toContain('Expected command: audit');
+    expect(stderr).toContain('Expected command: audit | cluster');
   });
 });

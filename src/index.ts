@@ -1,4 +1,5 @@
 export * from './audit/index.js';
+export * from './checks/index.js';
 export * from './cli/index.js';
 export * from './internal-movement/index.js';
 export * from './report/index.js';

@@ -5,7 +5,7 @@ import type { ClusterConfig } from './cluster-config.js';
 const config: ClusterConfig = {
   mappings: { 'CAFE MARKET': 'food' },
   patterns: [{ pattern: '/^LOTUS/i', cluster: 'groceries' }],
-  clusters: ['food', 'groceries', 'Other'],
+  clusters: ['food', 'groceries', 'other'],
 };
 
 describe('cluster matcher', () => {
@@ -14,10 +14,12 @@ describe('cluster matcher', () => {
       cluster: 'food',
       matchedBy: 'mapping',
     });
-    expect(matchCluster('Lotus Rama 9', config, 'deterministic')).toMatchObject({
-      cluster: 'groceries',
-      matchedBy: 'pattern',
-    });
+    expect(matchCluster('Lotus Rama 9', config, 'deterministic')).toMatchObject(
+      {
+        cluster: 'groceries',
+        matchedBy: 'pattern',
+      },
+    );
     expect(matchCluster('Cafe Maket', config, 'hybrid')).toMatchObject({
       cluster: 'food',
       matchedBy: 'fuzzy',

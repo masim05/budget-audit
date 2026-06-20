@@ -123,3 +123,4 @@ As a user, I can run `npm run cluster -- ... -co` and assign clusters for unmapp
 - All checks in the checks folder share one stable format, enabling deterministic recipient extraction rules.
 - YAML mapping file path is repository-local and committed to git as part of normal workflow.
 - Recipient translation shown in prompts can use deterministic transliteration/translation rules and does not require online services.
+- Example fixtures available for development and testing are `data/statements/Statement 0106-1506.pdf` and `data/checks/2026-06-01 08-22-54.JPEG`.

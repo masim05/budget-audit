@@ -1,4 +1,4 @@
-export type Currency = 'AMD' | 'USD' | 'UNKNOWN';
+export type Currency = 'AMD' | 'USD' | 'THB' | 'UNKNOWN';
 
 export const DEFAULT_AMD_PER_USD_MINOR = 40_000n;
 

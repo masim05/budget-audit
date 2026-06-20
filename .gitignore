@@ -1,4 +1,6 @@
-data
+data/*
+!data/clusters/
+!data/clusters/mapping.yml
 node_modules/
 dist/
 build/

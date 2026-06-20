@@ -8,6 +8,8 @@
 
 **Tech Stack:** Node.js 22 + TypeScript, Vitest, native `fetch`, `dotenv`, `yaml`.
 
+**Known Test Fixtures:** `data/statements/Statement 0106-1506.pdf` and `data/checks/2026-06-01 08-22-54.JPEG` must be used as baseline real-data examples while implementing and validating parsing/matching behavior.
+
 ## Global Constraints
 
 - **FR-002**: Cluster command MUST support options: `-sf, --statements-folder` (default `data/statements`), `-cf, --checks-folder` (default `data/checks`), `-f, --from`, `-t, --to`, `-v, --verbose`, and `-co, --cluster-other`.
