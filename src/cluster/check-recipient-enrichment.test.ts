@@ -64,7 +64,10 @@ describe('enrichRecipientsFromChecks', () => {
       time: '08:22',
       warnings: [],
     };
-    const result = enrichRecipientsFromChecks([tx({ debit: undefined })], [check]);
+    const result = enrichRecipientsFromChecks(
+      [tx({ debit: undefined })],
+      [check],
+    );
     expect(result.transactions[0].remitterOrBeneficiary).toBe('INCOME');
   });
 

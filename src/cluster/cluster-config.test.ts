@@ -75,7 +75,11 @@ describe('cluster config', () => {
   it('throws when mappings field is not an object', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'cluster-config-'));
     const path = join(folder, 'mapping.yml');
-    await writeFile(path, 'mappings: "not-an-object"\nclusters: [other]\n', 'utf8');
+    await writeFile(
+      path,
+      'mappings: "not-an-object"\nclusters: [other]\n',
+      'utf8',
+    );
     await expect(loadClusterConfig(path)).rejects.toThrow(
       /mappings must be object/,
     );

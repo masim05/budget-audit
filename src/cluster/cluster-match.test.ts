@@ -27,7 +27,9 @@ describe('cluster matcher', () => {
   });
 
   it('returns other in hybrid mode when no fuzzy match found', () => {
-    expect(matchCluster('COMPLETELY DIFFERENT SHOP', config, 'hybrid')).toMatchObject({
+    expect(
+      matchCluster('COMPLETELY DIFFERENT SHOP', config, 'hybrid'),
+    ).toMatchObject({
       cluster: 'other',
       matchedBy: 'other',
     });
@@ -39,7 +41,9 @@ describe('cluster matcher', () => {
       patterns: [{ pattern: 'NOT_A_REGEX', cluster: 'food' }],
       clusters: ['food', 'other'],
     };
-    expect(matchCluster('NOT_A_REGEX', badPatternConfig, 'deterministic')).toMatchObject({
+    expect(
+      matchCluster('NOT_A_REGEX', badPatternConfig, 'deterministic'),
+    ).toMatchObject({
       cluster: 'other',
       matchedBy: 'other',
     });

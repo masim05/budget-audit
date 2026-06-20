@@ -28,8 +28,7 @@ describe('parseStatementTextToTransactions', () => {
   });
 
   it('handles no-spaces line format and DEP credit as first transaction', () => {
-    const text =
-      '01/06/26DEP. DEPOSIT5,000.0015,000.00Branch';
+    const text = '01/06/26DEP. DEPOSIT5,000.0015,000.00Branch';
     const result = parseStatementTextToTransactions(text, 'sample.pdf');
     expect(result).toHaveLength(1);
     expect(result[0].credit).toBe(500000n);
@@ -37,8 +36,7 @@ describe('parseStatementTextToTransactions', () => {
   });
 
   it('skips non-transaction lines', () => {
-    const text =
-      'HEADER LINE\n01/06/26 PMT. PROMPTPAY 85.00 15,256.10 mPhone';
+    const text = 'HEADER LINE\n01/06/26 PMT. PROMPTPAY 85.00 15,256.10 mPhone';
     const result = parseStatementTextToTransactions(text, 'sample.pdf');
     expect(result).toHaveLength(1);
   });
