@@ -21,6 +21,7 @@ describe('interactive clustering', () => {
       .mockResolvedValueOnce('assign:food');
 
     const updated = await clusterOtherReceivers({
+      cwd: folder,
       configPath,
       config: { mappings: {}, patterns: [], clusters: ['Other'] },
       receivers: [
@@ -40,12 +41,12 @@ describe('interactive clustering', () => {
     });
 
     expect(updated.mappings['CAFE MARKET']).toBe('food');
-    expect(runGit).toHaveBeenCalledWith(['git', 'add', configPath]);
+    expect(runGit).toHaveBeenCalledWith(['git', 'add', 'clusters.yml']);
     expect(runGit).toHaveBeenCalledWith([
       'git',
       'commit',
       '--only',
-      configPath,
+      'clusters.yml',
       '-m',
       'chore: update cluster mappings',
     ]);
@@ -68,6 +69,7 @@ describe('interactive clustering', () => {
     });
 
     await clusterOtherReceivers({
+      cwd: folder,
       configPath,
       config: { mappings: {}, patterns: [], clusters: ['Other'] },
       receivers: [
@@ -114,6 +116,7 @@ describe('interactive clustering', () => {
     const prompt = vi.fn().mockResolvedValueOnce('skip');
 
     const updated = await clusterOtherReceivers({
+      cwd: folder,
       configPath,
       config: { mappings: {}, patterns: [], clusters: ['Other'] },
       receivers: [
@@ -153,6 +156,7 @@ describe('interactive clustering', () => {
       .mockResolvedValueOnce('assign:groceries');
 
     const updated = await clusterOtherReceivers({
+      cwd: folder,
       configPath,
       config: { mappings: {}, patterns: [], clusters: ['Other'] },
       receivers: [
@@ -188,6 +192,7 @@ describe('interactive clustering', () => {
     const prompt = vi.fn().mockResolvedValueOnce('assign:transport');
 
     const updated = await clusterOtherReceivers({
+      cwd: folder,
       configPath,
       config: { mappings: {}, patterns: [], clusters: ['Other', 'transport'] },
       receivers: [
@@ -227,6 +232,7 @@ describe('interactive clustering', () => {
       .mockResolvedValueOnce('skip');
 
     const updated = await clusterOtherReceivers({
+      cwd: folder,
       configPath,
       config: { mappings: {}, patterns: [], clusters: ['Other'] },
       receivers: [
@@ -273,6 +279,7 @@ describe('interactive clustering', () => {
 
     await expect(
       clusterOtherReceivers({
+        cwd: folder,
         configPath,
         config: { mappings: {}, patterns: [], clusters: ['Other'] },
         receivers: [
@@ -310,6 +317,7 @@ describe('interactive clustering', () => {
 
     await expect(
       clusterOtherReceivers({
+        cwd: folder,
         configPath,
         config: { mappings: {}, patterns: [], clusters: ['Other'] },
         receivers: [
@@ -344,6 +352,7 @@ describe('interactive clustering', () => {
 
     await expect(
       clusterOtherReceivers({
+        cwd: folder,
         configPath,
         config: { mappings: {}, patterns: [], clusters: ['Other', 'food'] },
         receivers: [

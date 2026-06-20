@@ -1,6 +1,8 @@
+import { relative } from 'node:path';
 import { saveClusterConfig, type ClusterConfig } from './cluster-config.js';
 
 export interface InteractiveClusteringOptions {
+  cwd?: string;
   configPath: string;
   config: ClusterConfig;
   receivers: Array<{
@@ -20,6 +22,7 @@ export async function clusterOtherReceivers(
 ): Promise<ClusterConfig> {
   const next = structuredClone(options.config);
   let changed = false;
+  const configPathForGit = relative(options.cwd ?? process.cwd(), options.configPath);
 
   for (const receiver of options.receivers) {
     // Build context info for the prompt
@@ -73,12 +76,12 @@ export async function clusterOtherReceivers(
   // Only persist and commit if there were actual changes
   if (changed) {
     await saveClusterConfig(options.configPath, next);
-    await options.runGit(['git', 'add', options.configPath]);
+    await options.runGit(['git', 'add', configPathForGit]);
     await options.runGit([
       'git',
       'commit',
       '--only',
-      options.configPath,
+      configPathForGit,
       '-m',
       'chore: update cluster mappings',
     ]);

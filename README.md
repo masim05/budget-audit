@@ -67,4 +67,4 @@ npm run cluster -- -sf ./data/statements -cf ./data/checks -v
 npm run cluster -- -a 2 --cluster-other
 ```
 
-`config/clusters.yml` stores normalized receiver mappings, regex patterns, and the set of supported cluster names. Copy `config/clusters.example.yml` to `config/clusters.yml` before the first run.
+`config/clusters.yml` stores normalized receiver mappings, regex patterns, and the set of supported cluster names. The cluster report groups THB spend transactions only and does not perform cross-currency conversion. Copy `config/clusters.example.yml` to `config/clusters.yml` before the first run.

@@ -27,7 +27,10 @@ export function matchCluster(
     const match = /^\/(.+)\/([a-z]*)$/.exec(pattern);
     if (match) {
       const [, body, flags = ''] = match;
-      if (body && new RegExp(body, flags).test(receiver)) {
+      const safeFlags = flags.replace(/g/g, '');
+      const regex = new RegExp(body, safeFlags);
+      regex.lastIndex = 0;
+      if (body && regex.test(receiver)) {
         return { cluster, matchedBy: 'pattern', normalizedReceiver };
       }
     }

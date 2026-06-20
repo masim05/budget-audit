@@ -155,6 +155,17 @@ describe('CLI contract', () => {
     expect(stderr).toBe('stdout failed\n');
   });
 
+  it('rejects cluster-only options on the audit command', async () => {
+    let stderr = '';
+    const code = await runCli(['audit', '--cluster-other'], process.cwd(), {
+      stdout: () => undefined,
+      stderr: (value) => (stderr += value),
+    });
+
+    expect(code).toBe(1);
+    expect(stderr).toContain('Unexpected cluster-only options');
+  });
+
   it('accepts absolute paths for data directory', async () => {
     const folder = await fixtureFolder();
     let stdout = '';

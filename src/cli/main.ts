@@ -117,6 +117,7 @@ export async function runCli(
     }
 
     if (command === 'cluster') {
+      validateNoAuditOptions(values);
       const defaultRange = previousFullCalendarMonth();
       const dateRange = validateDateRange(
         values.from ?? defaultRange.from,
@@ -219,31 +220,35 @@ export async function runCli(
       return 0;
     }
 
-    if (command !== 'audit') throw new Error('Expected command: audit');
-    const defaultRange = previousFullCalendarMonth();
-    const dateRange = validateDateRange(
-      values.from ?? defaultRange.from,
-      values.to ?? defaultRange.to,
-    );
-    const matchingMode = parseMatchingMode(values['matching-mode']);
-    const format = parseFormat(values.format);
-    const dataDir = values['data-dir'] ?? './data/statements';
-    const resolvedDataDir = resolveFromCwd(cwd, dataDir);
-    const report = await runAudit({
-      dataDir: resolvedDataDir,
-      dateRange,
-      matchingMode,
-      statementSource: new CsvStatementSource(resolvedDataDir),
-    });
-    const output = renderReport(report, format);
-    await writeOptionalOutput(
-      values.output === undefined
-        ? undefined
-        : resolveFromCwd(cwd, values.output),
-      output,
-    );
-    io.stdout(output);
-    return 0;
+    if (command === 'audit') {
+      validateNoClusterOptions(values);
+      const defaultRange = previousFullCalendarMonth();
+      const dateRange = validateDateRange(
+        values.from ?? defaultRange.from,
+        values.to ?? defaultRange.to,
+      );
+      const matchingMode = parseMatchingMode(values['matching-mode']);
+      const format = parseFormat(values.format);
+      const dataDir = values['data-dir'] ?? './data/statements';
+      const resolvedDataDir = resolveFromCwd(cwd, dataDir);
+      const report = await runAudit({
+        dataDir: resolvedDataDir,
+        dateRange,
+        matchingMode,
+        statementSource: new CsvStatementSource(resolvedDataDir),
+      });
+      const output = renderReport(report, format);
+      await writeOptionalOutput(
+        values.output === undefined
+          ? undefined
+          : resolveFromCwd(cwd, values.output),
+        output,
+      );
+      io.stdout(output);
+      return 0;
+    }
+
+    throw new Error('Expected command: audit or cluster');
   } catch (error) {
     io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
     if (
@@ -260,6 +265,29 @@ function parseFormat(value: string | undefined): OutputFormat {
   if (value === undefined || value === 'text' || value === 'json')
     return value ?? 'text';
   throw new Error(`Invalid output format: ${value}`);
+}
+
+function validateNoClusterOptions(values: Record<string, unknown>): void {
+  if (
+    values['statements-folder'] !== undefined ||
+    values['checks-folder'] !== undefined ||
+    values.approach !== undefined ||
+    values['cluster-other'] !== undefined ||
+    values.verbose !== undefined
+  ) {
+    throw new Error('Unexpected cluster-only options for audit command');
+  }
+}
+
+function validateNoAuditOptions(values: Record<string, unknown>): void {
+  if (
+    values['data-dir'] !== undefined ||
+    values['matching-mode'] !== undefined ||
+    values.format !== undefined ||
+    values.output !== undefined
+  ) {
+    throw new Error('Unexpected audit-only options for cluster command');
+  }
 }
 
 function parseClusterApproach(value: string | undefined): ClusterApproach {
