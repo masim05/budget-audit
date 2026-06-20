@@ -227,7 +227,7 @@ function resolveFromCwd(cwd: string, path: string): string {
   return isAbsolute(path) ? path : resolve(cwd, path);
 }
 
-/* v8 ignore next 13 */
+/* v8 ignore next 16 */
 if (import.meta.url === `file://${process.argv[1]}`) {
   const code = await runCli(process.argv.slice(2), process.cwd(), {
     stdout: (value) => process.stdout.write(value),

@@ -35,12 +35,12 @@ export async function runCluster(
 
   for (const tx of enrichedSpendTransactions) {
     const { cluster } = matchCluster(
-      tx.remitterOrBeneficiary ?? '',
+      tx.remitterOrBeneficiary,
       options.config,
       options.approach,
     );
     if (cluster === 'other') {
-      const key = (tx.remitterOrBeneficiary ?? '').trim() || 'UNKNOWN';
+      const key = tx.remitterOrBeneficiary.trim() || 'UNKNOWN';
       const current = unmatched.get(key) ?? [];
       current.push(tx);
       unmatched.set(key, current);

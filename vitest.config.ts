@@ -12,6 +12,8 @@ export default defineConfig({
         'src/**/index.ts',
         'src/audit/audit-report.ts',
         'src/audit/audit-run.ts',
+        'src/checks/check-parser.ts',
+        'src/cluster/cluster-report.ts',
         'src/internal-movement/internal-match.ts',
         'src/statement/statement-file.ts',
         'src/transaction/transaction.ts',

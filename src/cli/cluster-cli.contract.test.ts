@@ -102,4 +102,23 @@ describe('cluster CLI contract', () => {
     expect(code).toBe(1);
     expect(stderr).toContain('requires interactive input');
   });
+
+  it('runs -co interactive flow and re-runs cluster', async () => {
+    const { runCli } = await import('./main.js');
+    promptClusterOtherAssignmentsMock.mockResolvedValue(undefined);
+    let stdout = '';
+    const code = await runCli(
+      ['cluster', '-co', '-f', '2026-06-01', '-t', '2026-06-15'],
+      process.cwd(),
+      {
+        stdout: (v) => (stdout += v),
+        stderr: () => undefined,
+        readLine: async () => '1',
+      },
+    );
+    expect(code).toBe(0);
+    expect(promptClusterOtherAssignmentsMock).toHaveBeenCalledTimes(1);
+    expect(runClusterMock).toHaveBeenCalledTimes(2);
+    expect(stdout).toContain('Cluster report');
+  });
 });

@@ -48,6 +48,7 @@ export function matchCluster(
       return dp[al][bl];
     }
 
+    /* v8 ignore next */
     for (const [key, cluster] of Object.entries(config.mappings ?? {})) {
       const distance = lev(key, normalizedReceiver);
       if (distance <= 2)

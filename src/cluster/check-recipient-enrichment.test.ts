@@ -40,6 +40,48 @@ describe('enrichRecipientsFromChecks', () => {
     expect(result.warnings).toEqual([]);
   });
 
+  it('warns when no transaction matches the check', () => {
+    const check: ParsedCheck = {
+      filePath: '/tmp/2026-06-01 08-22-54.JPEG',
+      recipient: 'GHOST',
+      recipientEnglish: 'GHOST',
+      amountMinor: 99999n,
+      date: '2026-06-01',
+      time: '08:22',
+      warnings: [],
+    };
+    const result = enrichRecipientsFromChecks([tx({})], [check]);
+    expect(result.warnings[0]).toContain('No matching transaction');
+  });
+
+  it('matches transaction with undefined debit using 0n fallback', () => {
+    const check: ParsedCheck = {
+      filePath: '/tmp/2026-06-01 08-22-54.JPEG',
+      recipient: 'INCOME',
+      recipientEnglish: 'INCOME',
+      amountMinor: 0n,
+      date: '2026-06-01',
+      time: '08:22',
+      warnings: [],
+    };
+    const result = enrichRecipientsFromChecks([tx({ debit: undefined })], [check]);
+    expect(result.transactions[0].remitterOrBeneficiary).toBe('INCOME');
+  });
+
+  it('falls back to recipient when recipientEnglish is empty', () => {
+    const check: ParsedCheck = {
+      filePath: '/tmp/2026-06-01 08-22-54.JPEG',
+      recipient: 'ชื่อไทย',
+      recipientEnglish: '',
+      amountMinor: 8500n,
+      date: '2026-06-01',
+      time: '08:22',
+      warnings: [],
+    };
+    const result = enrichRecipientsFromChecks([tx({})], [check]);
+    expect(result.transactions[0].remitterOrBeneficiary).toBe('ชื่อไทย');
+  });
+
   it('warns on ambiguous matches', () => {
     const check: ParsedCheck = {
       filePath: '/tmp/2026-06-01 08-22-54.JPEG',

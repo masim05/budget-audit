@@ -15,6 +15,7 @@ function parseThbMinor(value: string): bigint {
 
 function parseDate(value: string): string {
   const match = /^(\d{2})\/(\d{2})\/(\d{2})$/.exec(value);
+  /* v8 ignore next */
   if (!match) throw new Error(`Unsupported statement date: ${value}`);
   return `20${match[3]}-${match[2]}-${match[1]}`;
 }

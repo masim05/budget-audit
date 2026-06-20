@@ -105,4 +105,67 @@ describe('cluster service', () => {
       expect.arrayContaining([expect.objectContaining({ recipient: 'Own' })]),
     );
   });
+
+  it('covers branch paths: excluded movements, multi-tx clusters, empty-name fallback', async () => {
+    const make = (overrides: Partial<Transaction>): Transaction => ({
+      id: 'x',
+      date: '2026-05-15',
+      transactionType: 'Card',
+      transactionNumber: 'TRF001',
+      accountNumber: 'ACC1',
+      currency: 'THB',
+      credit: 0n,
+      debit: 5000n,
+      creditAmd: 0n,
+      debitAmd: 0n,
+      remitterOrBeneficiary: 'CAFE MARKET',
+      details: 'lunch',
+      directionType: 'Outgoing',
+      sourceFile: 'stmt.pdf',
+      classification: 'invalid',
+      ...overrides,
+    });
+
+    const source: StatementSource = {
+      async load() {
+        return {
+          sourceName: 'test',
+          sourceLocation: 'test',
+          statementFiles: [],
+          warnings: [],
+          transactions: [
+            // Internal movement pair (same transactionNumber, distinct accounts)
+            make({ id: 'im1', accountNumber: 'ACC1', debit: 5000n, credit: 0n }),
+            make({ id: 'im2', accountNumber: 'ACC2', transactionNumber: 'TRF001', debit: undefined, credit: 5000n, directionType: 'Incoming' }),
+            // Two transactions in same named cluster → clusters.get() non-null branch
+            make({ id: 'a1', transactionNumber: 'A1', debit: 1000n }),
+            make({ id: 'a2', transactionNumber: 'A2', debit: 2000n }),
+            // Transaction going to 'other' twice (same recipient) → unmatched.get() non-null branch
+            make({ id: 'b1', transactionNumber: 'B1', remitterOrBeneficiary: 'OwnShop', debit: 3000n }),
+            make({ id: 'b2', transactionNumber: 'B2', remitterOrBeneficiary: 'OwnShop', debit: 4000n }),
+            // Empty remitterOrBeneficiary → || 'UNKNOWN' branch
+            make({ id: 'b3', transactionNumber: 'B3', remitterOrBeneficiary: '', debit: 500n }),
+            // tx.debit undefined → tx.debit ?? 0n branch (goes to 'food' cluster via mapping override)
+            make({ id: 'a3', transactionNumber: 'A3', debit: undefined, credit: undefined }),
+          ],
+        };
+      },
+    };
+    const checkParser: CheckParser = { async parseChecks() { return []; } };
+
+    const report = await runCluster({
+      statementsFolder: './data/statements',
+      checksFolder: './data/checks',
+      dateRange: { from: '2026-05-01', to: '2026-05-31' },
+      approach: 'deterministic',
+      statementSource: source,
+      checkParser,
+      config,
+    });
+
+    const clusterNames = report.clusters.map((c) => c.name);
+    expect(clusterNames).toContain('food');
+    expect(report.unmatchedReceivers).toContain('OwnShop');
+    expect(report.unmatchedReceivers).toContain('UNKNOWN');
+  });
 });

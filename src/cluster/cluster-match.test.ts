@@ -25,4 +25,23 @@ describe('cluster matcher', () => {
       matchedBy: 'fuzzy',
     });
   });
+
+  it('returns other in hybrid mode when no fuzzy match found', () => {
+    expect(matchCluster('COMPLETELY DIFFERENT SHOP', config, 'hybrid')).toMatchObject({
+      cluster: 'other',
+      matchedBy: 'other',
+    });
+  });
+
+  it('skips patterns with invalid format and falls back to other', () => {
+    const badPatternConfig: ClusterConfig = {
+      mappings: {},
+      patterns: [{ pattern: 'NOT_A_REGEX', cluster: 'food' }],
+      clusters: ['food', 'other'],
+    };
+    expect(matchCluster('NOT_A_REGEX', badPatternConfig, 'deterministic')).toMatchObject({
+      cluster: 'other',
+      matchedBy: 'other',
+    });
+  });
 });

@@ -42,4 +42,28 @@ describe('CLI output helpers', () => {
     expect(output).toContain('other recipients');
     expect(output).toContain('warnings:');
   });
+
+  it('sorts clusters by totalThb descending', () => {
+    const output = renderClusterReport(
+      {
+        auditedFolder: '/tmp/statements',
+        checksFolder: '/tmp/checks',
+        dateRange: { from: '2026-06-01', to: '2026-06-15' },
+        clusters: [
+          { name: 'кафе', totalThb: 5000n, transactions: [] },
+          { name: 'продукты', totalThb: 20000n, transactions: [] },
+          { name: 'такси', totalThb: 1000n, transactions: [] },
+        ],
+        unmatchedReceivers: [],
+        otherRecipients: [],
+        warnings: [],
+      },
+      false,
+    );
+    const pos1 = output.indexOf('продукты');
+    const pos2 = output.indexOf('кафе');
+    const pos3 = output.indexOf('такси');
+    expect(pos1).toBeLessThan(pos2);
+    expect(pos2).toBeLessThan(pos3);
+  });
 });
