@@ -57,6 +57,36 @@ describe('OpenAiCheckParser', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps malformed timestamp filenames when date range is provided', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, 'bad-name.JPEG'), Buffer.from([1]));
+    await writeFile(join(folder, '2026-06-03 09-11-01.JPEG'), Buffer.from([2]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"VELO CAFE","recipient_english":"VELO CAFE","amount_thb":"85.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    const checks = await parser.parseChecks(folder, {
+      from: '2026-06-01',
+      to: '2026-06-02',
+    });
+
+    expect(checks).toHaveLength(1);
+    expect(checks[0].filePath).toContain('bad-name.JPEG');
+    expect(checks[0].warnings[0]).toContain(
+      'does not match expected timestamp pattern',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('parses check payload from mocked OpenAI response', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'checks-'));
     const file = join(folder, '2026-06-01 08-22-54.JPEG');

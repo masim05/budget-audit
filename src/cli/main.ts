@@ -276,7 +276,9 @@ async function countCheckImages(
 ): Promise<{ total: number; inRange: number } | undefined> {
   try {
     const entries = await readdir(folderPath);
-    const imageEntries = entries.filter((value) => /\.(jpe?g|png)$/i.test(value));
+    const imageEntries = entries.filter((value) =>
+      /\.(jpe?g|png)$/i.test(value),
+    );
     const inRange = imageEntries.filter((value) => {
       const match = /^(\d{4}-\d{2}-\d{2}) \d{2}-\d{2}-\d{2}/.exec(value);
       if (!match) return false;

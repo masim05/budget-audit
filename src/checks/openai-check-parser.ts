@@ -27,13 +27,18 @@ export async function resolveOpenAiApiKey(
 }
 
 function parseTimestampFromFileName(filePath: string): {
+  matched: boolean;
   date: string;
   time: string;
 } {
   const base = basename(filePath, extname(filePath));
   const matched = /^(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})-\d{2}$/.exec(base);
-  if (!matched) return { date: '1970-01-01', time: '00:00' };
-  return { date: matched[1], time: `${matched[2]}:${matched[3]}` };
+  if (!matched) return { matched: false, date: '1970-01-01', time: '00:00' };
+  return {
+    matched: true,
+    date: matched[1],
+    time: `${matched[2]}:${matched[3]}`,
+  };
 }
 
 function parseAmountMinor(value: string): bigint {
@@ -77,6 +82,7 @@ export class OpenAiCheckParser implements CheckParser {
         .filter((value) => {
           if (!dateRange) return true;
           const timestamp = parseTimestampFromFileName(value);
+          if (!timestamp.matched) return true;
           return isWithinDateRange(timestamp.date, dateRange);
         })
         .sort();
@@ -175,6 +181,11 @@ export class OpenAiCheckParser implements CheckParser {
       recipient_english: string;
       amount_thb: string;
     };
+    const warnings = timestamp.matched
+      ? []
+      : [
+          `Filename ${basename(filePath)} does not match expected timestamp pattern YYYY-MM-DD HH-MM-SS`,
+        ];
     return {
       filePath,
       recipient: parsed.recipient.trim(),
@@ -183,7 +194,7 @@ export class OpenAiCheckParser implements CheckParser {
       amountMinor: parseAmountMinor(parsed.amount_thb),
       date: timestamp.date,
       time: timestamp.time,
-      warnings: [],
+      warnings,
     };
   }
 }

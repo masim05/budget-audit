@@ -31,7 +31,10 @@ export async function runCluster(
     // wired in, add a currency guard here to prevent mixing THB totals.
     return classifyExternalTransaction(transaction) === 'spend';
   });
-  const enrichment = enrichRecipientsFromChecks(spendTransactions, checksInRange);
+  const enrichment = enrichRecipientsFromChecks(
+    spendTransactions,
+    checksInRange,
+  );
   const enrichedSpendTransactions = enrichment.transactions;
 
   const clusters = new Map<

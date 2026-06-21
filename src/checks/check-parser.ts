@@ -11,5 +11,8 @@ export interface ParsedCheck {
 }
 
 export interface CheckParser {
-  parseChecks(folderPath: string, dateRange?: DateRange): Promise<ParsedCheck[]>;
+  parseChecks(
+    folderPath: string,
+    dateRange?: DateRange,
+  ): Promise<ParsedCheck[]>;
 }
