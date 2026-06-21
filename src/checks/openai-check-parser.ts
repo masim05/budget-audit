@@ -1,0 +1,239 @@
+import { readdir, readFile } from 'node:fs/promises';
+import { basename, extname, join } from 'node:path';
+import dotenv from 'dotenv';
+import { isWithinDateRange, type DateRange } from '../shared/date-range.js';
+import { CheckParseCache, type CheckPayload } from './check-parse-cache.js';
+import type { CheckParser, ParsedCheck } from './check-parser.js';
+
+const OPENAI_CHECK_MODEL = 'gpt-4.1-mini';
+const OPENAI_CHECK_PROMPT =
+  'Extract payment recipient and amount from this Thai check image. Return JSON: {"recipient":"...","recipient_english":"...","amount_thb":"123.45"}';
+
+/**
+ * Identifies the extraction configuration (model + prompt) that produced a
+ * cached payload. {@link CheckParseCache} discards entries whose signature no
+ * longer matches, so changing the model or prompt below automatically
+ * invalidates stale cache files — no manual cache-version bump required.
+ */
+export const CHECK_EXTRACTION_SIGNATURE = `${OPENAI_CHECK_MODEL}|${OPENAI_CHECK_PROMPT}`;
+
+interface OpenAiResponse {
+  output_text?: string;
+  output?: Array<{
+    content?: Array<{
+      type?: string;
+      text?: string;
+    }>;
+  }>;
+}
+
+export async function resolveOpenAiApiKey(
+  env: NodeJS.ProcessEnv,
+  dotEnvPath = '.env',
+): Promise<string> {
+  const direct = env.OPENAI_API_KEY?.trim();
+  if (direct) return direct;
+  const result = dotenv.config({ path: dotEnvPath });
+  const fileKey = result.parsed?.OPENAI_API_KEY?.trim();
+  if (fileKey) return fileKey;
+  throw new Error('OPENAI_API_KEY is required in environment or .env');
+}
+
+function parseTimestampFromFileName(filePath: string): {
+  matched: boolean;
+  date: string;
+  time: string;
+} {
+  const base = basename(filePath, extname(filePath));
+  const matched = /^(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})-\d{2}$/.exec(base);
+  if (!matched) return { matched: false, date: '1970-01-01', time: '00:00' };
+  return {
+    matched: true,
+    date: matched[1],
+    time: `${matched[2]}:${matched[3]}`,
+  };
+}
+
+function parseAmountMinor(value: string): bigint {
+  const normalized = value.trim().replaceAll(',', '');
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) {
+    throw new Error(`Invalid check amount: ${value}`);
+  }
+  const [whole, fraction = ''] = normalized.split('.');
+  return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
+}
+
+function extractJsonText(response: OpenAiResponse): string {
+  if (!response.output_text) {
+    const parts =
+      response.output
+        ?.flatMap((item) => item.content ?? [])
+        .map((content) => content.text?.trim())
+        .filter((value): value is string => Boolean(value)) ?? [];
+    if (parts.length > 0) {
+      return parts.join('\n');
+    }
+    throw new Error('OpenAI response did not contain output_text');
+  }
+  return response.output_text;
+}
+
+export class OpenAiCheckParser implements CheckParser {
+  constructor(
+    private readonly apiKey: string,
+    private readonly fetchImpl: typeof fetch = fetch,
+    private readonly cache?: CheckParseCache,
+  ) {}
+
+  async parseChecks(
+    folderPath: string,
+    dateRange?: DateRange,
+  ): Promise<ParsedCheck[]> {
+    let entries: string[];
+    try {
+      entries = (await readdir(folderPath))
+        .filter((value) => /\.(jpe?g|png)$/i.test(value))
+        .filter((value) => {
+          if (!dateRange) return true;
+          const timestamp = parseTimestampFromFileName(value);
+          if (!timestamp.matched) return true;
+          return isWithinDateRange(timestamp.date, dateRange);
+        })
+        .sort();
+    } catch {
+      /* v8 ignore next */
+      return [];
+    }
+
+    await this.cache?.load();
+
+    const result: ParsedCheck[] = [];
+    for (const name of entries) {
+      const filePath = join(folderPath, name);
+      try {
+        const image = await readFile(filePath);
+        const parsed = await this.parseSingle(filePath, image);
+        result.push(parsed);
+      } catch (error) {
+        result.push({
+          filePath,
+          recipient: '',
+          recipientEnglish: '',
+          amountMinor: 0n,
+          date: '1970-01-01',
+          time: '00:00',
+          warnings: [
+            `Failed to parse ${basename(filePath)}: ${(error as Error).message}`,
+          ],
+        });
+      }
+    }
+
+    await this.cache?.save();
+    return result;
+  }
+
+  private async parseSingle(
+    filePath: string,
+    image: Buffer,
+  ): Promise<ParsedCheck> {
+    const timestamp = parseTimestampFromFileName(filePath);
+    const payload = await this.resolvePayload(filePath, image);
+    const warnings = timestamp.matched
+      ? []
+      : [
+          `Filename ${basename(filePath)} does not match expected timestamp pattern YYYY-MM-DD HH-MM-SS`,
+        ];
+    return {
+      filePath,
+      recipient: payload.recipient.trim(),
+      recipientEnglish:
+        payload.recipient_english.trim() || payload.recipient.trim(),
+      amountMinor: parseAmountMinor(payload.amount_thb),
+      date: timestamp.date,
+      time: timestamp.time,
+      warnings,
+    };
+  }
+
+  /**
+   * Return the OpenAI extraction payload for an image, using the cache when a
+   * matching entry exists and storing fresh results for future runs.
+   */
+  private async resolvePayload(
+    filePath: string,
+    image: Buffer,
+  ): Promise<CheckPayload> {
+    const key = this.cache ? CheckParseCache.keyForImage(image) : undefined;
+    if (key !== undefined) {
+      const cached = this.cache?.get(key);
+      if (cached !== undefined) return cached;
+    }
+    const payload = await this.requestPayload(filePath, image);
+    if (key !== undefined) this.cache?.set(key, payload);
+    return payload;
+  }
+
+  private async requestPayload(
+    filePath: string,
+    image: Buffer,
+  ): Promise<CheckPayload> {
+    const base64 = image.toString('base64');
+    const mime =
+      extname(filePath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
+    const response = await this.fetchImpl(
+      'https://api.openai.com/v1/responses',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: OPENAI_CHECK_MODEL,
+          input: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_text',
+                  text: OPENAI_CHECK_PROMPT,
+                },
+                {
+                  type: 'input_image',
+                  image_url: `data:${mime};base64,${base64}`,
+                },
+              ],
+            },
+          ],
+          text: {
+            format: {
+              type: 'json_schema',
+              name: 'check_extract',
+              schema: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                  recipient: { type: 'string' },
+                  recipient_english: { type: 'string' },
+                  amount_thb: { type: 'string' },
+                },
+                required: ['recipient', 'recipient_english', 'amount_thb'],
+              },
+            },
+          },
+        }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        `OpenAI request failed for ${basename(filePath)}: ${response.status}`,
+      );
+    }
+    const raw = (await response.json()) as OpenAiResponse;
+    const jsonText = extractJsonText(raw)
+      .replace(/^```json\s*/i, '')
+      .replace(/```$/, '');
+    return JSON.parse(jsonText) as CheckPayload;
+  }
+}

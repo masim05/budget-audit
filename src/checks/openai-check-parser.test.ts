@@ -1,0 +1,357 @@
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
+import { CheckParseCache } from './check-parse-cache.js';
+import {
+  OpenAiCheckParser,
+  resolveOpenAiApiKey,
+} from './openai-check-parser.js';
+
+describe('resolveOpenAiApiKey', () => {
+  it('uses process env key first', async () => {
+    await expect(
+      resolveOpenAiApiKey({ OPENAI_API_KEY: 'test-key' }, '/tmp/missing.env'),
+    ).resolves.toBe('test-key');
+  });
+
+  it('loads key from .env path', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'openai-key-'));
+    const envPath = join(folder, '.env');
+    await writeFile(envPath, 'OPENAI_API_KEY=file-key\n', 'utf8');
+
+    await expect(resolveOpenAiApiKey({}, envPath)).resolves.toBe('file-key');
+  });
+
+  it('throws when key is not in env or .env', async () => {
+    await expect(
+      resolveOpenAiApiKey({}, '/tmp/nonexistent-xyz.env'),
+    ).rejects.toThrow('OPENAI_API_KEY is required');
+  });
+});
+
+describe('OpenAiCheckParser', () => {
+  it('uses image/png mime for PNG checks', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.png'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"X","recipient_english":"X","amount_thb":"1.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    await parser.parseChecks(folder);
+
+    const requestBody = JSON.parse(
+      String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'),
+    ) as {
+      input: Array<{ content: Array<{ type: string; image_url?: string }> }>;
+    };
+    const imagePart = requestBody.input[0].content.find(
+      (part) => part.type === 'input_image',
+    );
+    expect(imagePart?.image_url).toContain('data:image/png;base64,');
+  });
+
+  it('parses only files within provided date range', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+    await writeFile(join(folder, '2026-06-03 09-11-01.JPEG'), Buffer.from([2]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"VELO CAFE","recipient_english":"VELO CAFE","amount_thb":"85.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    const checks = await parser.parseChecks(folder, {
+      from: '2026-06-01',
+      to: '2026-06-02',
+    });
+
+    expect(checks).toHaveLength(1);
+    expect(checks[0].date).toBe('2026-06-01');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps malformed timestamp filenames when date range is provided', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, 'bad-name.JPEG'), Buffer.from([1]));
+    await writeFile(join(folder, '2026-06-03 09-11-01.JPEG'), Buffer.from([2]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"VELO CAFE","recipient_english":"VELO CAFE","amount_thb":"85.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    const checks = await parser.parseChecks(folder, {
+      from: '2026-06-01',
+      to: '2026-06-02',
+    });
+
+    expect(checks).toHaveLength(1);
+    expect(checks[0].filePath).toContain('bad-name.JPEG');
+    expect(checks[0].warnings[0]).toContain(
+      'does not match expected timestamp pattern',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('parses check payload from mocked OpenAI response', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    const file = join(folder, '2026-06-01 08-22-54.JPEG');
+    await writeFile(file, Buffer.from([1, 2, 3]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"VELO CAFE","recipient_english":"VELO CAFE","amount_thb":"85.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    const checks = await parser.parseChecks(folder);
+    expect(checks).toHaveLength(1);
+    expect(checks[0]).toMatchObject({
+      recipient: 'VELO CAFE',
+      recipientEnglish: 'VELO CAFE',
+      date: '2026-06-01',
+      time: '08:22',
+    });
+    expect(checks[0].amountMinor).toBe(8500n);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to output[].content[].text when output_text is absent', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output: [
+          {
+            content: [
+              {
+                type: 'text',
+                text: '{"recipient":"LOTUS","recipient_english":"Lotus","amount_thb":"100.00"}',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+    const checks = await parser.parseChecks(folder);
+    expect(checks[0].recipient).toBe('LOTUS');
+    expect(checks[0].amountMinor).toBe(10000n);
+  });
+
+  it('falls back to recipient when recipient_english is empty', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"ชื่อไทย","recipient_english":"","amount_thb":"100.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    const checks = await parser.parseChecks(folder);
+    expect(checks[0].recipientEnglish).toBe('ชื่อไทย');
+  });
+
+  it('returns warning when output_text and output content are both missing', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ output: [{}] }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('did not contain output_text');
+  });
+
+  it('returns warning on non-ok HTTP response', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('401');
+  });
+
+  it('returns warning when response has no output content', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ output: [] }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('did not contain output_text');
+  });
+
+  it('returns warning on invalid amount in parsed check JSON', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"X","recipient_english":"X","amount_thb":"not-a-number"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('Invalid check amount');
+  });
+
+  it('returns empty array when folder does not exist', async () => {
+    const fetchMock = vi.fn();
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+    const result = await parser.parseChecks('/nonexistent/checks-folder-xyz');
+    expect(result).toHaveLength(0);
+  });
+
+  it('skips the OpenAI call when a cached entry exists', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+    const cacheFolder = await mkdtemp(join(tmpdir(), 'check-cache-'));
+    const cachePath = join(cacheFolder, '.openai-parse-cache.json');
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"VELO CAFE","recipient_english":"Velo Cafe","amount_thb":"85.00"}',
+      }),
+    });
+
+    const first = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+      new CheckParseCache(cachePath),
+    );
+    const firstChecks = await first.parseChecks(folder);
+    expect(firstChecks[0].recipient).toBe('VELO CAFE');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // A new parser sharing the persisted cache must not call OpenAI again.
+    const second = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+      new CheckParseCache(cachePath),
+    );
+    const secondChecks = await second.parseChecks(folder);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(secondChecks[0]).toMatchObject({
+      recipient: 'VELO CAFE',
+      recipientEnglish: 'Velo Cafe',
+      date: '2026-06-01',
+      time: '08:22',
+    });
+    expect(secondChecks[0].amountMinor).toBe(8500n);
+  });
+
+  it('calls OpenAI for an image that is not yet cached', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+    await writeFile(join(folder, '2026-06-02 09-00-00.JPEG'), Buffer.from([2]));
+    const cacheFolder = await mkdtemp(join(tmpdir(), 'check-cache-'));
+    const cachePath = join(cacheFolder, '.openai-parse-cache.json');
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"X","recipient_english":"X","amount_thb":"1.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+      new CheckParseCache(cachePath),
+    );
+
+    await parser.parseChecks(folder);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns warning entry when parsing an image fails', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockRejectedValue(new Error('network error'));
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('network error');
+    expect(result[0].amountMinor).toBe(0n);
+  });
+});

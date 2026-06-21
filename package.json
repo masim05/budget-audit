@@ -8,6 +8,7 @@
   },
   "scripts": {
     "audit": "node dist/cli/main.js audit",
+    "cluster": "node dist/cli/main.js cluster",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "format:check": "prettier --check src tests examples README.md package.json tsconfig.json eslint.config.js prettier.config.js vitest.config.ts",
@@ -18,11 +19,17 @@
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": "^22.0.0",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@types/pdf-parse": "^1.1.4",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.0.0",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.9"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "pdf-parse": "^1.1.1",
+    "yaml": "^2.8.1"
   }
 }

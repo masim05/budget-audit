@@ -1,0 +1,35 @@
+mappings:
+  VELO CAFE: кафе
+  PRO MUAY THAI: кружки (музыка, муайтай, тайский, зал)
+  VILLA MARKET-HUA HIN: продукты
+  MS. SUPHASITA BOONTHERNG PROMPTPAY TOP UP / G-WALLET K PLUS WALLET: кружки (музыка, муайтай, тайский, зал)
+  MR. CHOKCHAI SUEASUAI: other
+  MRS. TANAPORN SARIGA: other
+  MS. NAREERAT BUMRUNGCHU: other
+  MS. WEN WEN: дом
+  MRS. KSENIIA BOBKOVA: MRS. KSENIIA BOBKOVA
+  MS. SUPHASITA BOONTHERNG (PROMPTPAY TOP UP / G-WALLET): кружки (музыка, муайтай, тайский, зал)
+  MR. CHOKCHAI SUEASUAI PROMPTPAY TOP UP / G-WALLET K PLUS WALLET: other
+  MS. OLESIA SUTYRINA: кафе
+patterns: []
+clusters:
+  - дом
+  - склад
+  - машина
+  - бензин + мойка
+  - обязательные лекарства
+  - кружки (музыка, муайтай, тайский, зал)
+  - уборка
+  - коммуналка
+  - телефоны, подписки
+  - здоровье
+  - кафе
+  - продукты
+  - такси
+  - красота
+  - товары для детей
+  - развлечения
+  - животные
+  - путешествия
+  - MRS. KSENIIA BOBKOVA
+  - other
