@@ -7,7 +7,23 @@ import {
   renderReport,
   writeOptionalOutput,
 } from './output.js';
+import type { ClusterReport } from '../cluster/index.js';
 import { sampleReport } from '../report/sample-report.test-helper.js';
+
+type OtherRecipient = ClusterReport['otherRecipients'][number];
+
+function otherRecipient(
+  name: string,
+  debits: Array<bigint | undefined>,
+): OtherRecipient {
+  return {
+    recipient: name,
+    recipientEnglish: name,
+    transactions: debits.map(
+      (debit) => ({ debit }) as OtherRecipient['transactions'][number],
+    ),
+  };
+}
 
 describe('CLI output helpers', () => {
   it('renders text and JSON formats', () => {
@@ -33,14 +49,41 @@ describe('CLI output helpers', () => {
         dateRange: { from: '2026-06-01', to: '2026-06-15' },
         clusters: [{ name: 'кафе', total: 17000n, transactions: [] }],
         unmatchedReceivers: ['UNKNOWN'],
-        otherRecipients: [],
+        otherRecipients: [otherRecipient('UNKNOWN', [17000n])],
         warnings: ['warn'],
       },
       true,
     );
     expect(output).toContain('кафе: 170.00 THB');
-    expect(output).toContain('other recipients');
+    expect(output).toContain('other recipients (1, 170.00 THB):');
+    expect(output).toContain(' - UNKNOWN (170.00 THB)');
     expect(output).toContain('warnings:');
+  });
+
+  it('totals other recipients, sorts them by name, and tolerates missing debit', () => {
+    const output = renderClusterReport(
+      {
+        auditedFolder: '/tmp/statements',
+        checksFolder: '/tmp/checks',
+        dateRange: { from: '2026-06-01', to: '2026-06-15' },
+        clusters: [],
+        unmatchedReceivers: [],
+        otherRecipients: [
+          otherRecipient('BETA', [5000n, undefined]),
+          otherRecipient('ALPHA', [2500n, 2500n]),
+        ],
+        warnings: [],
+      },
+      false,
+    );
+    // Header total = 5000 + 5000 = 10000 minor units.
+    expect(output).toContain('other recipients (2, 100.00 THB):');
+    // Sorted alphabetically by name; undefined debit counts as zero.
+    const alphaIndex = output.indexOf(' - ALPHA (50.00 THB)');
+    const betaIndex = output.indexOf(' - BETA (50.00 THB)');
+    expect(alphaIndex).toBeGreaterThan(-1);
+    expect(betaIndex).toBeGreaterThan(-1);
+    expect(alphaIndex).toBeLessThan(betaIndex);
   });
 
   it('sorts clusters by total descending and handles equal totals', () => {

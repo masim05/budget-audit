@@ -44,11 +44,26 @@ export function renderClusterReport(
   )) {
     lines.push(`${cluster.name}: ${formatThb(cluster.total)} THB`);
   }
-  if (report.unmatchedReceivers.length > 0) {
+  if (report.otherRecipients.length > 0) {
+    const recipientTotals = report.otherRecipients
+      .map((recipient) => ({
+        name: recipient.recipient,
+        total: recipient.transactions.reduce(
+          (sum, tx) => sum + (tx.debit ?? 0n),
+          0n,
+        ),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const otherTotal = recipientTotals.reduce(
+      (sum, recipient) => sum + recipient.total,
+      0n,
+    );
     lines.push('');
-    lines.push(`other recipients (${report.unmatchedReceivers.length}):`);
-    for (const receiver of report.unmatchedReceivers.sort()) {
-      lines.push(` - ${receiver}`);
+    lines.push(
+      `other recipients (${recipientTotals.length}, ${formatThb(otherTotal)} THB):`,
+    );
+    for (const recipient of recipientTotals) {
+      lines.push(` - ${recipient.name} (${formatThb(recipient.total)} THB)`);
     }
   }
   if (verbose && report.warnings.length > 0) {
