@@ -296,14 +296,28 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     stdout: (value) => process.stdout.write(value),
     stderr: (value) => process.stderr.write(value),
     readLine: async () => {
-      const chunks: Buffer[] = [];
       return new Promise((resolveInput) => {
-        process.stdin.once('data', (chunk) => {
-          chunks.push(chunk);
-          resolveInput(Buffer.concat(chunks).toString('utf8').trim());
-        });
+        const onData = (chunk: Buffer): void => {
+          cleanup();
+          process.stdin.pause();
+          resolveInput(chunk.toString('utf8').trim());
+        };
+        const onEnd = (): void => {
+          cleanup();
+          process.stdin.pause();
+          resolveInput('');
+        };
+        const cleanup = (): void => {
+          process.stdin.off('data', onData);
+          process.stdin.off('end', onEnd);
+        };
+
+        process.stdin.resume();
+        process.stdin.once('data', onData);
+        process.stdin.once('end', onEnd);
       });
     },
   });
+  process.stdin.pause();
   process.exitCode = code;
 }
