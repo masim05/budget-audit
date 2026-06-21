@@ -18,6 +18,7 @@ import {
   UnsafeStatementError,
 } from '../statement/index.js';
 import {
+  isWithinDateRange,
   previousFullCalendarMonth,
   validateDateRange,
 } from '../shared/index.js';
@@ -198,13 +199,14 @@ async function runClusterCommand(
   // Parse checks once; re-use the results on the second run to avoid
   // redundant OpenAI API calls when --cluster-other triggers a re-cluster.
   const checkParser = new OpenAiCheckParser(apiKey);
-  const totalChecks = await countCheckImages(checksFolder);
-  logVerbose(
-    totalChecks === undefined
-      ? 'Parsing checks'
-      : `Parsing checks (${totalChecks})`,
-  );
-  const parsedChecks = await checkParser.parseChecks(checksFolder);
+  const checkCounts = await countCheckImages(checksFolder, dateRange);
+  if (checkCounts !== undefined) {
+    logVerbose(`Filtering checks (${checkCounts.total})`);
+    logVerbose(`Parsing checks (${checkCounts.inRange})`);
+  } else {
+    logVerbose('Parsing checks');
+  }
+  const parsedChecks = await checkParser.parseChecks(checksFolder, dateRange);
   const parsedCheckCount = Array.isArray(parsedChecks)
     ? parsedChecks.length
     : 0;
@@ -268,10 +270,19 @@ function resolveFromCwd(cwd: string, path: string): string {
   return isAbsolute(path) ? path : resolve(cwd, path);
 }
 
-async function countCheckImages(folderPath: string): Promise<number | undefined> {
+async function countCheckImages(
+  folderPath: string,
+  dateRange: { from: string; to: string },
+): Promise<{ total: number; inRange: number } | undefined> {
   try {
     const entries = await readdir(folderPath);
-    return entries.filter((value) => /\.(jpe?g|png)$/i.test(value)).length;
+    const imageEntries = entries.filter((value) => /\.(jpe?g|png)$/i.test(value));
+    const inRange = imageEntries.filter((value) => {
+      const match = /^(\d{4}-\d{2}-\d{2}) \d{2}-\d{2}-\d{2}/.exec(value);
+      if (!match) return false;
+      return isWithinDateRange(match[1], dateRange);
+    }).length;
+    return { total: imageEntries.length, inRange };
   } catch {
     return undefined;
   }

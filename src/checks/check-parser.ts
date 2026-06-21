@@ -1,3 +1,5 @@
+import type { DateRange } from '../shared/date-range.js';
+
 export interface ParsedCheck {
   filePath: string;
   recipient: string;
@@ -9,5 +11,5 @@ export interface ParsedCheck {
 }
 
 export interface CheckParser {
-  parseChecks(folderPath: string): Promise<ParsedCheck[]>;
+  parseChecks(folderPath: string, dateRange?: DateRange): Promise<ParsedCheck[]>;
 }

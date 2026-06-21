@@ -12,7 +12,10 @@ export async function runCluster(
   // Use pre-parsed checks when available to avoid redundant API calls on re-runs.
   const checks =
     options.parsedChecks ??
-    (await options.checkParser.parseChecks(options.checksFolder));
+    (await options.checkParser.parseChecks(
+      options.checksFolder,
+      options.dateRange,
+    ));
   const checksInRange = checks.filter((check) =>
     isWithinDateRange(check.date, options.dateRange),
   );

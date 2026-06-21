@@ -1,6 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, extname, join } from 'node:path';
 import dotenv from 'dotenv';
+import { isWithinDateRange, type DateRange } from '../shared/date-range.js';
 import type { CheckParser, ParsedCheck } from './check-parser.js';
 
 interface OpenAiResponse {
@@ -65,11 +66,19 @@ export class OpenAiCheckParser implements CheckParser {
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
-  async parseChecks(folderPath: string): Promise<ParsedCheck[]> {
+  async parseChecks(
+    folderPath: string,
+    dateRange?: DateRange,
+  ): Promise<ParsedCheck[]> {
     let entries: string[];
     try {
       entries = (await readdir(folderPath))
         .filter((value) => /\.(jpe?g|png)$/i.test(value))
+        .filter((value) => {
+          if (!dateRange) return true;
+          const timestamp = parseTimestampFromFileName(value);
+          return isWithinDateRange(timestamp.date, dateRange);
+        })
         .sort();
     } catch {
       /* v8 ignore next */
