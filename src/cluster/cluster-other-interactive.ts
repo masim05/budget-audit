@@ -32,6 +32,7 @@ export async function promptClusterOtherAssignments(
 ): Promise<void> {
   const selectableClusters = orderedClusters(config.clusters);
   for (const receiver of report.otherRecipients) {
+    io.stdout('>>>>>>>>\n');
     io.stdout(`recipient: ${receiver.recipient}\n`);
     io.stdout(`recipient (english): ${receiver.recipientEnglish}\n`);
     io.stdout('transactions:\n');

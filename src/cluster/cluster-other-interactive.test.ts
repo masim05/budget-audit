@@ -53,7 +53,7 @@ describe('promptClusterOtherAssignments', () => {
     });
 
     const updated = await loadClusterConfig(configPath);
-    expect(stdout).toContain('recipient: VELO CAFE');
+    expect(stdout).toContain('>>>>>>>>\nrecipient: VELO CAFE');
     expect(updated.mappings['VELO CAFE']).toBe('other');
     expect(stdout).toContain('(1) other');
     expect(stdout).toContain(`(2) ${config.clusters[0]}`);
