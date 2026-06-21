@@ -87,7 +87,7 @@ describe('OpenAiCheckParser', () => {
     expect(checks[0].amountMinor).toBe(10000n);
   });
 
-  it('throws on non-ok HTTP response', async () => {
+  it('returns warning on non-ok HTTP response', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'checks-'));
     await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
 
@@ -99,10 +99,12 @@ describe('OpenAiCheckParser', () => {
       'k',
       fetchMock as unknown as typeof fetch,
     );
-    await expect(parser.parseChecks(folder)).rejects.toThrow('401');
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('401');
   });
 
-  it('throws when response has no output content', async () => {
+  it('returns warning when response has no output content', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'checks-'));
     await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
 
@@ -114,12 +116,12 @@ describe('OpenAiCheckParser', () => {
       'k',
       fetchMock as unknown as typeof fetch,
     );
-    await expect(parser.parseChecks(folder)).rejects.toThrow(
-      'did not contain output_text',
-    );
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('did not contain output_text');
   });
 
-  it('throws on invalid amount in parsed check JSON', async () => {
+  it('returns warning on invalid amount in parsed check JSON', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'checks-'));
     await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
 
@@ -134,8 +136,8 @@ describe('OpenAiCheckParser', () => {
       'k',
       fetchMock as unknown as typeof fetch,
     );
-    await expect(parser.parseChecks(folder)).rejects.toThrow(
-      'Invalid check amount',
-    );
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('Invalid check amount');
   });
 });

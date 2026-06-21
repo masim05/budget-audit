@@ -82,8 +82,8 @@ As a user, I can run `npm run cluster -- ... -co` and assign clusters for unmapp
 - **FR-004**: System MUST cluster spend transactions by recipient identity using persisted recipient-to-cluster mapping.
 - **FR-005**: System MUST keep recipient-to-cluster mapping in a git-tracked YAML file.
 - **FR-006**: Transactions with unmapped recipients MUST be assigned to cluster `other`.
-- **FR-007**: System MUST extract recipient text from check images in the checks folder using a deterministic parser for the known check format.
-- **FR-008**: System MUST attempt to match extracted check recipient to statement transactions by exact amount and nearest timestamp on the same date.
+- **FR-007**: System MUST extract recipient text from check images in the checks folder using the OpenAI Responses API (model `gpt-4.1-mini`); the API key is resolved from `OPENAI_API_KEY` env var or `.env` file. Individual file parse failures MUST NOT abort the run and MUST produce per-file warnings.
+- **FR-008**: System MUST attempt to match extracted check recipient to statement transactions by exact amount on the same date; timestamp matching is not performed because transaction timestamps are not available.
 - **FR-009**: Ambiguous or failed check-to-transaction matching MUST NOT overwrite transaction recipient identity and MUST produce warnings.
 - **FR-010**: `--cluster-other` mode MUST iterate unique unmapped recipients and prompt for cluster assignment with numbered cluster options.
 - **FR-011**: `--cluster-other` prompt MUST show recipient (including English transliteration/translation label) and all related transactions with date-time and THB amount in human-readable format.
@@ -122,5 +122,5 @@ As a user, I can run `npm run cluster -- ... -co` and assign clusters for unmapp
 - Statement inputs for this feature include statement files under the statements folder and are compatible with existing repository statement ingestion expectations.
 - All checks in the checks folder share one stable format, enabling deterministic recipient extraction rules.
 - YAML mapping file path is repository-local and committed to git as part of normal workflow.
-- Recipient translation shown in prompts can use deterministic transliteration/translation rules and does not require online services.
+- Recipient translation shown in prompts is provided by the OpenAI API (check image parsing returns an English transliteration alongside the original recipient text); internet access is required for the check enrichment flow.
 - Example fixtures available for development and testing are `data/statements/Statement 0106-1506.pdf` and `data/checks/2026-06-01 08-22-54.JPEG`.

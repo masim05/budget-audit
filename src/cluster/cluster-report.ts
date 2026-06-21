@@ -12,7 +12,7 @@ export interface ClusterReport {
   dateRange: DateRange;
   clusters: Array<{
     name: string;
-    totalThb: bigint;
+    total: bigint;
     transactions: ClusteredTransaction[];
   }>;
   unmatchedReceivers: string[];

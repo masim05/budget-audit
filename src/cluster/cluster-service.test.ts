@@ -96,8 +96,8 @@ describe('cluster service', () => {
 
     expect(report.clusters).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: 'food', totalThb: 12345n }),
-        expect.objectContaining({ name: 'other', totalThb: 5000n }),
+        expect.objectContaining({ name: 'food', total: 12345n }),
+        expect.objectContaining({ name: 'other', total: 5000n }),
       ]),
     );
     expect(report.unmatchedReceivers).toEqual(expect.arrayContaining(['Own']));

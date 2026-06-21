@@ -31,7 +31,7 @@ describe('CLI output helpers', () => {
         auditedFolder: '/tmp/statements',
         checksFolder: '/tmp/checks',
         dateRange: { from: '2026-06-01', to: '2026-06-15' },
-        clusters: [{ name: 'кафе', totalThb: 17000n, transactions: [] }],
+        clusters: [{ name: 'кафе', total: 17000n, transactions: [] }],
         unmatchedReceivers: ['UNKNOWN'],
         otherRecipients: [],
         warnings: ['warn'],
@@ -43,16 +43,16 @@ describe('CLI output helpers', () => {
     expect(output).toContain('warnings:');
   });
 
-  it('sorts clusters by totalThb descending', () => {
+  it('sorts clusters by total descending', () => {
     const output = renderClusterReport(
       {
         auditedFolder: '/tmp/statements',
         checksFolder: '/tmp/checks',
         dateRange: { from: '2026-06-01', to: '2026-06-15' },
         clusters: [
-          { name: 'кафе', totalThb: 5000n, transactions: [] },
-          { name: 'продукты', totalThb: 20000n, transactions: [] },
-          { name: 'такси', totalThb: 1000n, transactions: [] },
+          { name: 'кафе', total: 5000n, transactions: [] },
+          { name: 'продукты', total: 20000n, transactions: [] },
+          { name: 'такси', total: 1000n, transactions: [] },
         ],
         unmatchedReceivers: [],
         otherRecipients: [],

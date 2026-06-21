@@ -154,7 +154,8 @@ function matchingUsdAmount(transaction: Transaction): bigint | undefined {
     transaction.debitAmd,
   );
   const amd = normalizedAmd !== 0n ? normalizedAmd : original;
-  if (transaction.currency === 'UNKNOWN') return undefined;
+  if (transaction.currency === 'UNKNOWN' || transaction.currency === 'THB')
+    return undefined;
   const amount =
     transaction.currency === 'USD' ? original : convertAmdToUsdMinor(amd);
   return amount < 0n ? -amount : amount;

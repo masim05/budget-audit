@@ -40,9 +40,9 @@ export function renderClusterReport(
   lines.push(`Checks: ${report.checksFolder}`);
   lines.push('');
   for (const cluster of report.clusters.sort((a, b) =>
-    b.totalThb > a.totalThb ? 1 : -1,
+    b.total > a.total ? 1 : b.total < a.total ? -1 : 0,
   )) {
-    lines.push(`${cluster.name}: ${formatThb(cluster.totalThb)} THB`);
+    lines.push(`${cluster.name}: ${formatThb(cluster.total)} THB`);
   }
   if (report.unmatchedReceivers.length > 0) {
     lines.push('');

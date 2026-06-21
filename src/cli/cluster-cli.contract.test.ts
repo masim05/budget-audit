@@ -42,7 +42,7 @@ describe('cluster CLI contract', () => {
       auditedFolder: '/tmp/statements',
       checksFolder: '/tmp/checks',
       dateRange: { from: '2026-06-01', to: '2026-06-15' },
-      clusters: [{ name: 'кафе', totalThb: 8500n, transactions: [] }],
+      clusters: [{ name: 'кафе', total: 8500n, transactions: [] }],
       unmatchedReceivers: [],
       otherRecipients: [],
       warnings: [],

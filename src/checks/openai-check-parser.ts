@@ -66,16 +66,35 @@ export class OpenAiCheckParser implements CheckParser {
   ) {}
 
   async parseChecks(folderPath: string): Promise<ParsedCheck[]> {
-    const entries = (await readdir(folderPath))
-      .filter((value) => /\.(jpe?g|png)$/i.test(value))
-      .sort();
+    let entries: string[];
+    try {
+      entries = (await readdir(folderPath))
+        .filter((value) => /\.(jpe?g|png)$/i.test(value))
+        .sort();
+    } catch {
+      return [];
+    }
 
     const result: ParsedCheck[] = [];
     for (const name of entries) {
       const filePath = join(folderPath, name);
-      const image = await readFile(filePath);
-      const parsed = await this.parseSingle(filePath, image);
-      result.push(parsed);
+      try {
+        const image = await readFile(filePath);
+        const parsed = await this.parseSingle(filePath, image);
+        result.push(parsed);
+      } catch (error) {
+        result.push({
+          filePath,
+          recipient: '',
+          recipientEnglish: '',
+          amountMinor: 0n,
+          date: '1970-01-01',
+          time: '00:00',
+          warnings: [
+            `Failed to parse ${basename(filePath)}: ${(error as Error).message}`,
+          ],
+        });
+      }
     }
     return result;
   }
@@ -86,6 +105,8 @@ export class OpenAiCheckParser implements CheckParser {
   ): Promise<ParsedCheck> {
     const timestamp = parseTimestampFromFileName(filePath);
     const base64 = image.toString('base64');
+    const mime =
+      extname(filePath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
     const response = await this.fetchImpl(
       'https://api.openai.com/v1/responses',
       {
@@ -106,7 +127,7 @@ export class OpenAiCheckParser implements CheckParser {
                 },
                 {
                   type: 'input_image',
-                  image_url: `data:image/jpeg;base64,${base64}`,
+                  image_url: `data:${mime};base64,${base64}`,
                 },
               ],
             },

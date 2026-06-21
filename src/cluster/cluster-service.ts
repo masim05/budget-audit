@@ -26,7 +26,7 @@ export async function runCluster(
     string,
     {
       name: string;
-      totalThb: bigint;
+      total: bigint;
       transactions: typeof enrichedSpendTransactions;
     }
   >();
@@ -47,10 +47,10 @@ export async function runCluster(
     }
     const prev = clusters.get(cluster) ?? {
       name: cluster,
-      totalThb: 0n,
+      total: 0n,
       transactions: [],
     };
-    prev.totalThb = prev.totalThb + (tx.debit ?? 0n);
+    prev.total = prev.total + (tx.debit ?? 0n);
     prev.transactions.push(tx);
     clusters.set(cluster, prev);
   }
