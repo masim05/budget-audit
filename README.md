@@ -28,7 +28,7 @@ npm run cluster -- -f 2026-06-01 -t 2026-06-15
 npm run cluster -- -f 2026-06-01 -t 2026-06-15 -co
 ```
 
-Cluster command reads statement PDFs from `data/statements` and checks from `data/checks` by default, enriches recipients using OpenAI API (`OPENAI_API_KEY` in env or `.env`), and persists recipient-to-cluster mapping in `data/clusters/mapping.yml`.
+Cluster command reads statement PDFs from `data/statements` and checks from `data/checks` by default, enriches recipients using OpenAI API (`OPENAI_API_KEY` in env or `.env`), and persists recipient-to-cluster mapping in `config/clusters/mapping.yml`.
 
 To make the `budget-audit` command available directly in your shell, link the package first:
 

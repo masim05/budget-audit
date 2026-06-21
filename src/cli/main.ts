@@ -184,7 +184,7 @@ async function runClusterCommand(
     cwd,
     (values['checks-folder'] as string | undefined) ?? 'data/checks',
   );
-  const configPath = resolveFromCwd(cwd, 'data/clusters/mapping.yml');
+  const configPath = resolveFromCwd(cwd, 'config/clusters/mapping.yml');
   logVerbose(
     `Starting cluster run for ${dateRange.from}..${dateRange.to} (statements=${statementsFolder}, checks=${checksFolder})`,
   );
