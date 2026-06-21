@@ -54,7 +54,9 @@ describe('promptClusterOtherAssignments', () => {
 
     const updated = await loadClusterConfig(configPath);
     expect(stdout).toContain('recipient: VELO CAFE');
-    expect(updated.mappings['VELO CAFE']).toBe(config.clusters[0]);
+    expect(updated.mappings['VELO CAFE']).toBe('other');
+    expect(stdout).toContain('(1) other');
+    expect(stdout).toContain(`(2) ${config.clusters[0]}`);
   });
 
   it('re-prompts on invalid selection', async () => {
@@ -86,7 +88,7 @@ describe('promptClusterOtherAssignments', () => {
               creditAmd: 0n,
               debitAmd: 0n,
               remitterOrBeneficiary: 'VELO CAFE',
-              details: 'mPhone',
+              details: 'mPhone | check 08:22',
               directionType: 'Incoming',
               sourceFile: 'statement.pdf',
               classification: 'invalid',
@@ -103,9 +105,9 @@ describe('promptClusterOtherAssignments', () => {
     });
 
     expect(stdout).toContain('invalid selection');
-    expect(stdout).toContain('0.00 THB');
+    expect(stdout).toContain('2026-06-01 08:22, 0.00 THB');
     const updated = await loadClusterConfig(configPath);
-    expect(updated.mappings['VELO CAFE']).toBe(config.clusters[0]);
+    expect(updated.mappings['VELO CAFE']).toBe('other');
   });
 
   it('skips recipient when readLine throws (EOF / non-interactive)', async () => {
