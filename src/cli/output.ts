@@ -44,11 +44,19 @@ export function renderClusterReport(
   )) {
     lines.push(`${cluster.name}: ${formatThb(cluster.total)} THB`);
     if (verbose) {
-      const recipients = [
-        ...new Set(cluster.transactions.map((tx) => tx.remitterOrBeneficiary)),
-      ].sort((a, b) => a.localeCompare(b));
-      for (const recipient of recipients) {
-        lines.push(` - ${recipient}`);
+      const totalsByRecipient = new Map<string, bigint>();
+      for (const tx of cluster.transactions) {
+        const previous = totalsByRecipient.get(tx.remitterOrBeneficiary) ?? 0n;
+        totalsByRecipient.set(
+          tx.remitterOrBeneficiary,
+          previous + (tx.debit ?? 0n),
+        );
+      }
+      const recipients = [...totalsByRecipient.entries()].sort((a, b) =>
+        a[0].localeCompare(b[0]),
+      );
+      for (const [recipient, total] of recipients) {
+        lines.push(` - ${recipient} (${formatThb(total)} THB)`);
       }
     }
   }

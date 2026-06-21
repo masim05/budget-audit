@@ -26,13 +26,20 @@ function otherRecipient(
   };
 }
 
-function cluster(name: string, total: bigint, recipients: string[]): Cluster {
+function cluster(
+  name: string,
+  total: bigint,
+  transactions: Array<{ recipient: string; debit?: bigint }>,
+): Cluster {
   return {
     name,
     total,
-    transactions: recipients.map(
-      (remitterOrBeneficiary) =>
-        ({ remitterOrBeneficiary }) as Cluster['transactions'][number],
+    transactions: transactions.map(
+      ({ recipient, debit }) =>
+        ({
+          remitterOrBeneficiary: recipient,
+          debit,
+        }) as Cluster['transactions'][number],
     ),
   };
 }
@@ -120,13 +127,18 @@ describe('CLI output helpers', () => {
     expect(output).toContain('такси');
   });
 
-  it('lists distinct recipients per cluster, sorted, only when verbose', () => {
+  it('lists recipients per cluster with totals, sorted, only when verbose', () => {
     const report: ClusterReport = {
       auditedFolder: '/tmp/statements',
       checksFolder: '/tmp/checks',
       dateRange: { from: '2026-06-01', to: '2026-06-15' },
       clusters: [
-        cluster('кафе', 17000n, ['VELO CAFE', 'STARBUCKS', 'VELO CAFE']),
+        cluster('кафе', 17000n, [
+          { recipient: 'VELO CAFE', debit: 5000n },
+          { recipient: 'STARBUCKS', debit: 7000n },
+          { recipient: 'VELO CAFE', debit: 5000n },
+          { recipient: 'STARBUCKS', debit: undefined },
+        ]),
       ],
       unmatchedReceivers: [],
       otherRecipients: [],
@@ -134,14 +146,15 @@ describe('CLI output helpers', () => {
     };
 
     const verbose = renderClusterReport(report, true);
-    // Distinct recipients, sorted alphabetically.
-    const starbucksIndex = verbose.indexOf(' - STARBUCKS');
-    const veloIndex = verbose.indexOf(' - VELO CAFE');
+    // Distinct recipients, per-recipient totals; sorted alphabetically.
+    // STARBUCKS: 7000 + (undefined -> 0) = 70.00; VELO CAFE: 5000 + 5000 = 100.00.
+    const starbucksIndex = verbose.indexOf(' - STARBUCKS (70.00 THB)');
+    const veloIndex = verbose.indexOf(' - VELO CAFE (100.00 THB)');
     expect(starbucksIndex).toBeGreaterThan(-1);
     expect(veloIndex).toBeGreaterThan(-1);
     expect(starbucksIndex).toBeLessThan(veloIndex);
     // Duplicate recipient is collapsed to a single line.
-    expect(verbose.match(/ - VELO CAFE/g)).toHaveLength(1);
+    expect(verbose.match(/ - VELO CAFE /g)).toHaveLength(1);
 
     // Non-verbose output keeps only the cluster total line.
     const quiet = renderClusterReport(report, false);
