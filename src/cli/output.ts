@@ -43,6 +43,14 @@ export function renderClusterReport(
     b.total > a.total ? 1 : b.total < a.total ? -1 : 0,
   )) {
     lines.push(`${cluster.name}: ${formatThb(cluster.total)} THB`);
+    if (verbose) {
+      const recipients = [
+        ...new Set(cluster.transactions.map((tx) => tx.remitterOrBeneficiary)),
+      ].sort((a, b) => a.localeCompare(b));
+      for (const recipient of recipients) {
+        lines.push(` - ${recipient}`);
+      }
+    }
   }
   if (report.otherRecipients.length > 0) {
     const recipientTotals = report.otherRecipients

@@ -11,6 +11,7 @@ import type { ClusterReport } from '../cluster/index.js';
 import { sampleReport } from '../report/sample-report.test-helper.js';
 
 type OtherRecipient = ClusterReport['otherRecipients'][number];
+type Cluster = ClusterReport['clusters'][number];
 
 function otherRecipient(
   name: string,
@@ -21,6 +22,17 @@ function otherRecipient(
     recipientEnglish: name,
     transactions: debits.map(
       (debit) => ({ debit }) as OtherRecipient['transactions'][number],
+    ),
+  };
+}
+
+function cluster(name: string, total: bigint, recipients: string[]): Cluster {
+  return {
+    name,
+    total,
+    transactions: recipients.map(
+      (remitterOrBeneficiary) =>
+        ({ remitterOrBeneficiary }) as Cluster['transactions'][number],
     ),
   };
 }
@@ -106,5 +118,34 @@ describe('CLI output helpers', () => {
     expect(output).toContain('продукты');
     expect(output).toContain('кафе');
     expect(output).toContain('такси');
+  });
+
+  it('lists distinct recipients per cluster, sorted, only when verbose', () => {
+    const report: ClusterReport = {
+      auditedFolder: '/tmp/statements',
+      checksFolder: '/tmp/checks',
+      dateRange: { from: '2026-06-01', to: '2026-06-15' },
+      clusters: [
+        cluster('кафе', 17000n, ['VELO CAFE', 'STARBUCKS', 'VELO CAFE']),
+      ],
+      unmatchedReceivers: [],
+      otherRecipients: [],
+      warnings: [],
+    };
+
+    const verbose = renderClusterReport(report, true);
+    // Distinct recipients, sorted alphabetically.
+    const starbucksIndex = verbose.indexOf(' - STARBUCKS');
+    const veloIndex = verbose.indexOf(' - VELO CAFE');
+    expect(starbucksIndex).toBeGreaterThan(-1);
+    expect(veloIndex).toBeGreaterThan(-1);
+    expect(starbucksIndex).toBeLessThan(veloIndex);
+    // Duplicate recipient is collapsed to a single line.
+    expect(verbose.match(/ - VELO CAFE/g)).toHaveLength(1);
+
+    // Non-verbose output keeps only the cluster total line.
+    const quiet = renderClusterReport(report, false);
+    expect(quiet).toContain('кафе: 170.00 THB');
+    expect(quiet).not.toContain(' - VELO CAFE');
   });
 });
