@@ -90,6 +90,36 @@ describe('cluster CLI contract', () => {
     expect(stdout).toContain('Cluster report');
   });
 
+  it('prints progress details when -v is provided', async () => {
+    const { runCli } = await import('./main.js');
+    let stdout = '';
+    let stderr = '';
+    const code = await runCli(
+      [
+        'cluster',
+        '-v',
+        '-sf',
+        '/s',
+        '-cf',
+        '/c',
+        '-f',
+        '2026-06-01',
+        '-t',
+        '2026-06-15',
+      ],
+      process.cwd(),
+      {
+        stdout: (value) => (stdout += value),
+        stderr: (value) => (stderr += value),
+      },
+    );
+    expect(code).toBe(0);
+    expect(stdout).toContain('Cluster report');
+    expect(stderr).toContain('[cluster] Starting cluster run');
+    expect(stderr).toContain('[cluster] Parsing checks');
+    expect(stderr).toContain('[cluster] Cluster run completed');
+  });
+
   it('prints cluster options in help output', async () => {
     const { runCli } = await import('./main.js');
     let stdout = '';

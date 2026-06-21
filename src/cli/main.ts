@@ -162,6 +162,13 @@ async function runClusterCommand(
   cwd: string,
   io: CliIo,
 ): Promise<number> {
+  const verbose = values.verbose === true;
+  const startMs = Date.now();
+  const logVerbose = (message: string): void => {
+    if (!verbose) return;
+    io.stderr(`[cluster] ${message}\n`);
+  };
+
   const defaultRange = previousFullCalendarMonth();
   const dateRange = validateDateRange(
     (values.from as string | undefined) ?? defaultRange.from,
@@ -176,7 +183,12 @@ async function runClusterCommand(
     (values['checks-folder'] as string | undefined) ?? 'data/checks',
   );
   const configPath = resolveFromCwd(cwd, 'data/clusters/mapping.yml');
+  logVerbose(
+    `Starting cluster run for ${dateRange.from}..${dateRange.to} (statements=${statementsFolder}, checks=${checksFolder})`,
+  );
+  logVerbose(`Loading cluster config from ${configPath}`);
   const config = await loadClusterConfig(configPath);
+  logVerbose('Resolving OpenAI API key');
   const apiKey = await resolveOpenAiApiKey(
     process.env,
     resolveFromCwd(cwd, '.env'),
@@ -185,8 +197,14 @@ async function runClusterCommand(
   // Parse checks once; re-use the results on the second run to avoid
   // redundant OpenAI API calls when --cluster-other triggers a re-cluster.
   const checkParser = new OpenAiCheckParser(apiKey);
+  logVerbose('Parsing checks');
   const parsedChecks = await checkParser.parseChecks(checksFolder);
+  const parsedCheckCount = Array.isArray(parsedChecks)
+    ? parsedChecks.length
+    : 0;
+  logVerbose(`Parsed ${parsedCheckCount} checks`);
 
+  logVerbose('Running cluster aggregation');
   let report = await runCluster({
     statementsFolder,
     checksFolder,
@@ -202,10 +220,12 @@ async function runClusterCommand(
     if (!io.readLine) {
       throw new Error('--cluster-other requires interactive input');
     }
+    logVerbose('Starting --cluster-other interactive assignment flow');
     await promptClusterOtherAssignments(report, config, configPath, {
       stdout: io.stdout,
       readLine: io.readLine,
     });
+    logVerbose('Reloading config and re-running cluster after assignments');
     const updated = await loadClusterConfig(configPath);
     report = await runCluster({
       statementsFolder,
@@ -219,7 +239,15 @@ async function runClusterCommand(
     });
   }
 
-  const output = renderClusterReport(report, values.verbose === true);
+  const clusterCount = report.clusters.length;
+  const unmatchedCount = report.unmatchedReceivers.length;
+  const warningCount = report.warnings.length;
+  const elapsedMs = Date.now() - startMs;
+  logVerbose(
+    `Cluster run completed in ${elapsedMs}ms (clusters=${clusterCount}, unmatched=${unmatchedCount}, warnings=${warningCount})`,
+  );
+
+  const output = renderClusterReport(report, verbose);
   io.stdout(output);
   return 0;
 }
