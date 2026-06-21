@@ -2,6 +2,7 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
+import { CheckParseCache } from './check-parse-cache.js';
 import {
   OpenAiCheckParser,
   resolveOpenAiApiKey,
@@ -273,6 +274,70 @@ describe('OpenAiCheckParser', () => {
     );
     const result = await parser.parseChecks('/nonexistent/checks-folder-xyz');
     expect(result).toHaveLength(0);
+  });
+
+  it('skips the OpenAI call when a cached entry exists', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+    const cacheFolder = await mkdtemp(join(tmpdir(), 'check-cache-'));
+    const cachePath = join(cacheFolder, '.openai-parse-cache.json');
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"VELO CAFE","recipient_english":"Velo Cafe","amount_thb":"85.00"}',
+      }),
+    });
+
+    const first = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+      new CheckParseCache(cachePath),
+    );
+    const firstChecks = await first.parseChecks(folder);
+    expect(firstChecks[0].recipient).toBe('VELO CAFE');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // A new parser sharing the persisted cache must not call OpenAI again.
+    const second = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+      new CheckParseCache(cachePath),
+    );
+    const secondChecks = await second.parseChecks(folder);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(secondChecks[0]).toMatchObject({
+      recipient: 'VELO CAFE',
+      recipientEnglish: 'Velo Cafe',
+      date: '2026-06-01',
+      time: '08:22',
+    });
+    expect(secondChecks[0].amountMinor).toBe(8500n);
+  });
+
+  it('calls OpenAI for an image that is not yet cached', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+    await writeFile(join(folder, '2026-06-02 09-00-00.JPEG'), Buffer.from([2]));
+    const cacheFolder = await mkdtemp(join(tmpdir(), 'check-cache-'));
+    const cachePath = join(cacheFolder, '.openai-parse-cache.json');
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"X","recipient_english":"X","amount_thb":"1.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+      new CheckParseCache(cachePath),
+    );
+
+    await parser.parseChecks(folder);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('returns warning entry when parsing an image fails', async () => {

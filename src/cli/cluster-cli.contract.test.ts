@@ -25,6 +25,9 @@ vi.mock('../checks/index.js', () => ({
       return parseChecksMock(folderPath, dateRange);
     }
   },
+  CheckParseCache: class {
+    constructor(public readonly cacheFilePath: string) {}
+  },
   resolveOpenAiApiKey: (...args: unknown[]) => resolveOpenAiApiKeyMock(...args),
 }));
 

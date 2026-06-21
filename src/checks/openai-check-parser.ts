@@ -2,6 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { basename, extname, join } from 'node:path';
 import dotenv from 'dotenv';
 import { isWithinDateRange, type DateRange } from '../shared/date-range.js';
+import { CheckParseCache, type CheckPayload } from './check-parse-cache.js';
 import type { CheckParser, ParsedCheck } from './check-parser.js';
 
 interface OpenAiResponse {
@@ -69,6 +70,7 @@ export class OpenAiCheckParser implements CheckParser {
   constructor(
     private readonly apiKey: string,
     private readonly fetchImpl: typeof fetch = fetch,
+    private readonly cache?: CheckParseCache,
   ) {}
 
   async parseChecks(
@@ -91,6 +93,8 @@ export class OpenAiCheckParser implements CheckParser {
       return [];
     }
 
+    await this.cache?.load();
+
     const result: ParsedCheck[] = [];
     for (const name of entries) {
       const filePath = join(folderPath, name);
@@ -112,6 +116,8 @@ export class OpenAiCheckParser implements CheckParser {
         });
       }
     }
+
+    await this.cache?.save();
     return result;
   }
 
@@ -120,6 +126,46 @@ export class OpenAiCheckParser implements CheckParser {
     image: Buffer,
   ): Promise<ParsedCheck> {
     const timestamp = parseTimestampFromFileName(filePath);
+    const payload = await this.resolvePayload(filePath, image);
+    const warnings = timestamp.matched
+      ? []
+      : [
+          `Filename ${basename(filePath)} does not match expected timestamp pattern YYYY-MM-DD HH-MM-SS`,
+        ];
+    return {
+      filePath,
+      recipient: payload.recipient.trim(),
+      recipientEnglish:
+        payload.recipient_english.trim() || payload.recipient.trim(),
+      amountMinor: parseAmountMinor(payload.amount_thb),
+      date: timestamp.date,
+      time: timestamp.time,
+      warnings,
+    };
+  }
+
+  /**
+   * Return the OpenAI extraction payload for an image, using the cache when a
+   * matching entry exists and storing fresh results for future runs.
+   */
+  private async resolvePayload(
+    filePath: string,
+    image: Buffer,
+  ): Promise<CheckPayload> {
+    const key = this.cache ? CheckParseCache.keyForImage(image) : undefined;
+    if (key !== undefined) {
+      const cached = this.cache?.get(key);
+      if (cached !== undefined) return cached;
+    }
+    const payload = await this.requestPayload(filePath, image);
+    if (key !== undefined) this.cache?.set(key, payload);
+    return payload;
+  }
+
+  private async requestPayload(
+    filePath: string,
+    image: Buffer,
+  ): Promise<CheckPayload> {
     const base64 = image.toString('base64');
     const mime =
       extname(filePath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
@@ -176,25 +222,6 @@ export class OpenAiCheckParser implements CheckParser {
     const jsonText = extractJsonText(raw)
       .replace(/^```json\s*/i, '')
       .replace(/```$/, '');
-    const parsed = JSON.parse(jsonText) as {
-      recipient: string;
-      recipient_english: string;
-      amount_thb: string;
-    };
-    const warnings = timestamp.matched
-      ? []
-      : [
-          `Filename ${basename(filePath)} does not match expected timestamp pattern YYYY-MM-DD HH-MM-SS`,
-        ];
-    return {
-      filePath,
-      recipient: parsed.recipient.trim(),
-      recipientEnglish:
-        parsed.recipient_english.trim() || parsed.recipient.trim(),
-      amountMinor: parseAmountMinor(parsed.amount_thb),
-      date: timestamp.date,
-      time: timestamp.time,
-      warnings,
-    };
+    return JSON.parse(jsonText) as CheckPayload;
   }
 }

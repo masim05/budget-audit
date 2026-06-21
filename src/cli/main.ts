@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 import { readdir } from 'node:fs/promises';
-import { isAbsolute, resolve } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runAudit } from '../audit/index.js';
-import { OpenAiCheckParser, resolveOpenAiApiKey } from '../checks/index.js';
+import {
+  CheckParseCache,
+  OpenAiCheckParser,
+  resolveOpenAiApiKey,
+} from '../checks/index.js';
 import {
   loadClusterConfig,
   PdfStatementSource,
@@ -198,7 +202,15 @@ async function runClusterCommand(
 
   // Parse checks once; re-use the results on the second run to avoid
   // redundant OpenAI API calls when --cluster-other triggers a re-cluster.
-  const checkParser = new OpenAiCheckParser(apiKey);
+  // The on-disk cache additionally skips OpenAI calls for check images that
+  // were already parsed on a previous run.
+  const cachePath = join(checksFolder, '.openai-parse-cache.json');
+  logVerbose(`Using OpenAI parse cache at ${cachePath}`);
+  const checkParser = new OpenAiCheckParser(
+    apiKey,
+    fetch,
+    new CheckParseCache(cachePath),
+  );
   const checkCounts = await countCheckImages(checksFolder, dateRange);
   if (checkCounts !== undefined) {
     logVerbose(`Filtering checks (${checkCounts.total})`);
