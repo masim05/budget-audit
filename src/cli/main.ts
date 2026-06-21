@@ -182,13 +182,19 @@ async function runClusterCommand(
     resolveFromCwd(cwd, '.env'),
   );
 
+  // Parse checks once; re-use the results on the second run to avoid
+  // redundant OpenAI API calls when --cluster-other triggers a re-cluster.
+  const checkParser = new OpenAiCheckParser(apiKey);
+  const parsedChecks = await checkParser.parseChecks(checksFolder);
+
   let report = await runCluster({
     statementsFolder,
     checksFolder,
     dateRange,
     approach: 'deterministic',
     statementSource: new PdfStatementSource(statementsFolder),
-    checkParser: new OpenAiCheckParser(apiKey),
+    checkParser,
+    parsedChecks,
     config,
   });
 
@@ -207,7 +213,8 @@ async function runClusterCommand(
       dateRange,
       approach: 'deterministic',
       statementSource: new PdfStatementSource(statementsFolder),
-      checkParser: new OpenAiCheckParser(apiKey),
+      checkParser,
+      parsedChecks,
       config: updated,
     });
   }

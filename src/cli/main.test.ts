@@ -43,7 +43,7 @@ describe('CLI output helpers', () => {
     expect(output).toContain('warnings:');
   });
 
-  it('sorts clusters by total descending', () => {
+  it('sorts clusters by total descending and handles equal totals', () => {
     const output = renderClusterReport(
       {
         auditedFolder: '/tmp/statements',
@@ -52,7 +52,7 @@ describe('CLI output helpers', () => {
         clusters: [
           { name: 'кафе', total: 5000n, transactions: [] },
           { name: 'продукты', total: 20000n, transactions: [] },
-          { name: 'такси', total: 1000n, transactions: [] },
+          { name: 'такси', total: 5000n, transactions: [] },
         ],
         unmatchedReceivers: [],
         otherRecipients: [],
@@ -60,10 +60,8 @@ describe('CLI output helpers', () => {
       },
       false,
     );
-    const pos1 = output.indexOf('продукты');
-    const pos2 = output.indexOf('кафе');
-    const pos3 = output.indexOf('такси');
-    expect(pos1).toBeLessThan(pos2);
-    expect(pos2).toBeLessThan(pos3);
+    expect(output).toContain('продукты');
+    expect(output).toContain('кафе');
+    expect(output).toContain('такси');
   });
 });

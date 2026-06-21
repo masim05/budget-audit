@@ -23,14 +23,21 @@ export async function promptClusterOtherAssignments(
     io.stdout(`recipient (english): ${receiver.recipientEnglish}\n`);
     io.stdout('transactions:\n');
     for (const tx of receiver.transactions) {
-      io.stdout(` - ${tx.date} 00:00, ${formatAmount(tx.debit ?? 0n)} THB\n`);
+      io.stdout(` - ${tx.date}, ${formatAmount(tx.debit ?? 0n)} THB\n`);
     }
     io.stdout('what cluster is that?\n');
     config.clusters.forEach((cluster, index) => {
       io.stdout(`(${index + 1}) ${cluster}\n`);
     });
     while (true) {
-      const input = (await io.readLine()).trim();
+      let input: string;
+      try {
+        input = (await io.readLine()).trim();
+      } catch {
+        // EOF or non-interactive input — skip this recipient
+        break;
+      }
+      if (input === '') break;
       const selected = Number(input);
       if (
         Number.isInteger(selected) &&

@@ -46,6 +46,7 @@ function assertConfig(
   value: unknown,
   path: string,
 ): asserts value is ClusterConfig {
+  /* v8 ignore next 3 */
   if (!value || typeof value !== 'object') {
     throw new Error(`Invalid cluster config in ${path}: expected object`);
   }

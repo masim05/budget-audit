@@ -140,4 +140,29 @@ describe('OpenAiCheckParser', () => {
     expect(result).toHaveLength(1);
     expect(result[0].warnings[0]).toContain('Invalid check amount');
   });
+
+  it('returns empty array when folder does not exist', async () => {
+    const fetchMock = vi.fn();
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+    const result = await parser.parseChecks('/nonexistent/checks-folder-xyz');
+    expect(result).toHaveLength(0);
+  });
+
+  it('returns warning entry when parsing an image fails', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockRejectedValue(new Error('network error'));
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('network error');
+    expect(result[0].amountMinor).toBe(0n);
+  });
 });

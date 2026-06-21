@@ -107,4 +107,66 @@ describe('promptClusterOtherAssignments', () => {
     const updated = await loadClusterConfig(configPath);
     expect(updated.mappings['VELO CAFE']).toBe(config.clusters[0]);
   });
+
+  it('skips recipient when readLine throws (EOF / non-interactive)', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'cluster-co-'));
+    const configPath = join(folder, 'mapping.yml');
+    const config = await loadClusterConfig(configPath);
+    let stdout = '';
+    const report: ClusterReport = {
+      auditedFolder: '/tmp/s',
+      checksFolder: '/tmp/c',
+      dateRange: { from: '2026-06-01', to: '2026-06-15' },
+      clusters: [],
+      unmatchedReceivers: ['VELO CAFE'],
+      otherRecipients: [
+        {
+          recipient: 'VELO CAFE',
+          recipientEnglish: 'VELO CAFE',
+          transactions: [],
+        },
+      ],
+      warnings: [],
+    };
+
+    await promptClusterOtherAssignments(report, config, configPath, {
+      stdout: (value) => (stdout += value),
+      readLine: async () => {
+        throw new Error('EOF');
+      },
+    });
+
+    expect(stdout).toContain('recipient: VELO CAFE');
+    const unchanged = await loadClusterConfig(configPath);
+    expect(unchanged.mappings['VELO CAFE']).toBeUndefined();
+  });
+
+  it('breaks on empty input (user skips)', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'cluster-co-'));
+    const configPath = join(folder, 'mapping.yml');
+    const config = await loadClusterConfig(configPath);
+    const report: ClusterReport = {
+      auditedFolder: '/tmp/s',
+      checksFolder: '/tmp/c',
+      dateRange: { from: '2026-06-01', to: '2026-06-15' },
+      clusters: [],
+      unmatchedReceivers: ['VELO CAFE'],
+      otherRecipients: [
+        {
+          recipient: 'VELO CAFE',
+          recipientEnglish: 'VELO CAFE',
+          transactions: [],
+        },
+      ],
+      warnings: [],
+    };
+
+    await promptClusterOtherAssignments(report, config, configPath, {
+      stdout: () => undefined,
+      readLine: async () => '',
+    });
+
+    const unchanged = await loadClusterConfig(configPath);
+    expect(unchanged.mappings['VELO CAFE']).toBeUndefined();
+  });
 });

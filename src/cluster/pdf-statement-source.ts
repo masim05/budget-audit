@@ -23,6 +23,7 @@ function parseDate(value: string): string {
 export function parseStatementTextToTransactions(
   text: string,
   sourceFile: string,
+  warnings: string[] = [],
 ): Transaction[] {
   const lines = text
     .split(/\r?\n/)
@@ -56,6 +57,11 @@ export function parseStatementTextToTransactions(
     } else if (/CASH CDM|DEP/i.test(particulars)) {
       credit = amount;
     } else {
+      // Heuristic: no prior balance available; assume debit. May be wrong for
+      // fees, PromptPay transfers, or other non-deposit first transactions.
+      warnings.push(
+        `${sourceFile}: first transaction "${particulars}" direction inferred as debit (no opening balance); verify manually`,
+      );
       debit = amount;
     }
     previousBalance = balance;
@@ -107,7 +113,7 @@ export class PdfStatementSource implements StatementSource {
         const buffer = await readFile(path);
         const parsed = await pdfParse(buffer);
         transactions.push(
-          ...parseStatementTextToTransactions(parsed.text, path),
+          ...parseStatementTextToTransactions(parsed.text, path, warnings),
         );
         statementFiles.push({ path, processingStatus: 'processed' });
       } catch (error) {

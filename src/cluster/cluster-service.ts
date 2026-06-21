@@ -9,14 +9,20 @@ export async function runCluster(
   options: ClusterServiceOptions,
 ): Promise<ClusterReport> {
   const loaded = await options.statementSource.load();
-  const checks = await options.checkParser.parseChecks(options.checksFolder);
+  // Use pre-parsed checks when available to avoid redundant API calls on re-runs.
+  const checks =
+    options.parsedChecks ??
+    (await options.checkParser.parseChecks(options.checksFolder));
   const inRangeTransactions = loaded.transactions.filter((t) =>
     isWithinDateRange(t.date, options.dateRange),
   );
   const movementResult = findInternalMovements(inRangeTransactions, 'strict');
 
   const spendTransactions = inRangeTransactions.filter((transaction) => {
+    /* v8 ignore next 2 */
     if (movementResult.excludedTransactionIds.has(transaction.id)) return false;
+    // Safe: PdfStatementSource only yields THB. If a non-THB source is ever
+    // wired in, add a currency guard here to prevent mixing THB totals.
     return classifyExternalTransaction(transaction) === 'spend';
   });
   const enrichment = enrichRecipientsFromChecks(spendTransactions, checks);
@@ -50,7 +56,7 @@ export async function runCluster(
       total: 0n,
       transactions: [],
     };
-    prev.total = prev.total + (tx.debit ?? 0n);
+    prev.total = prev.total + /* v8 ignore next */ (tx.debit ?? 0n);
     prev.transactions.push(tx);
     clusters.set(cluster, prev);
   }

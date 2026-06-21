@@ -1,6 +1,6 @@
 import type { DateRange } from '../shared/date-range.js';
 import type { ClusterConfig } from './cluster-config.js';
-import type { CheckParser } from '../checks/index.js';
+import type { CheckParser, ParsedCheck } from '../checks/index.js';
 import type { StatementSource } from '../statement/index.js';
 import type { Transaction } from '../transaction/index.js';
 
@@ -31,5 +31,7 @@ export interface ClusterServiceOptions {
   approach: 'deterministic' | 'hybrid';
   statementSource: StatementSource;
   checkParser: CheckParser;
+  /** Pre-parsed checks; when provided, `checkParser.parseChecks` is skipped. */
+  parsedChecks?: ParsedCheck[];
   config: ClusterConfig;
 }

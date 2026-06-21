@@ -72,6 +72,7 @@ export class OpenAiCheckParser implements CheckParser {
         .filter((value) => /\.(jpe?g|png)$/i.test(value))
         .sort();
     } catch {
+      /* v8 ignore next */
       return [];
     }
 

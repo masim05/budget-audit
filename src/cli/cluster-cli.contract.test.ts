@@ -49,6 +49,21 @@ describe('cluster CLI contract', () => {
     });
   });
 
+  it('uses default date range when -f/-t are omitted', async () => {
+    const { runCli } = await import('./main.js');
+    let stdout = '';
+    const code = await runCli(
+      ['cluster', '-sf', '/s', '-cf', '/c'],
+      process.cwd(),
+      {
+        stdout: (value) => (stdout += value),
+        stderr: () => undefined,
+      },
+    );
+    expect(code).toBe(0);
+    expect(stdout).toContain('Cluster report');
+  });
+
   it('supports cluster command aliases and renders report', async () => {
     const { runCli } = await import('./main.js');
     let stdout = '';

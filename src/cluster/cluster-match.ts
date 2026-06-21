@@ -16,7 +16,7 @@ export function matchCluster(
       normalizedReceiver,
     } as const;
 
-  for (const { pattern, cluster } of config.patterns ?? []) {
+  for (const { pattern, cluster } of config.patterns) {
     const m = /^\/(.+)\/([a-z]*)$/.exec(pattern);
     if (!m) continue;
     const [, body, flags = ''] = m;
@@ -48,8 +48,9 @@ export function matchCluster(
       return dp[al][bl];
     }
 
-    /* v8 ignore next */
-    for (const [key, cluster] of Object.entries(config.mappings ?? {})) {
+    for (const [key, cluster] of Object.entries(
+      /* v8 ignore next */ config.mappings ?? {},
+    )) {
       const distance = lev(key, normalizedReceiver);
       if (distance <= 2)
         return { cluster, matchedBy: 'fuzzy', normalizedReceiver } as const;

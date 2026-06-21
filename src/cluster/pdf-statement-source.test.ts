@@ -56,7 +56,9 @@ describe('PdfStatementSource', () => {
     const source = new PdfStatementSource(folder);
     const result = await source.load();
     expect(result.transactions).toHaveLength(1);
-    expect(result.warnings).toHaveLength(0);
+    // The first PMT transaction has no prior balance, so direction is inferred as debit with a warning
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toContain('direction inferred as debit');
     expect(result.statementFiles).toHaveLength(1);
   });
 
