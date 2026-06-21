@@ -7,6 +7,11 @@ export function matchCluster(
   config: ClusterConfig,
   approach: ClusterApproach,
 ) {
+  const hasBoundaryAt = (value: string, index: number): boolean => {
+    if (index >= value.length) return true;
+    return /[\s\-/().,]/.test(value[index]);
+  };
+
   const normalizedReceiver = normalizeReceiver(receiver);
   const exact = config.mappings[normalizedReceiver];
   if (exact)
@@ -15,6 +20,24 @@ export function matchCluster(
       matchedBy: 'mapping',
       normalizedReceiver,
     } as const;
+
+  // Treat mapping keys as aliases for the same recipient when one form is a
+  // prefix of the other and the next character is a token boundary.
+  for (const [key, cluster] of Object.entries(config.mappings)) {
+    const receiverStartsWithKey =
+      normalizedReceiver.startsWith(key) &&
+      hasBoundaryAt(normalizedReceiver, key.length);
+    const keyStartsWithReceiver =
+      key.startsWith(normalizedReceiver) &&
+      hasBoundaryAt(key, normalizedReceiver.length);
+    if (receiverStartsWithKey || keyStartsWithReceiver) {
+      return {
+        cluster,
+        matchedBy: 'mapping',
+        normalizedReceiver,
+      } as const;
+    }
+  }
 
   for (const { pattern, cluster } of config.patterns) {
     const m = /^\/(.+)\/([a-z]*)$/.exec(pattern);
