@@ -7,7 +7,7 @@ mappings:
   MRS. TANAPORN SARIGA: other
   MS. NAREERAT BUMRUNGCHU: other
   MS. WEN WEN: дом
-  MRS. KSENIIA BOBKOVA: other
+  MRS. KSENIIA BOBKOVA: MRS. KSENIIA BOBKOVA
   MS. SUPHASITA BOONTHERNG (PROMPTPAY TOP UP / G-WALLET): кружки (музыка, муайтай, тайский, зал)
   MR. CHOKCHAI SUEASUAI PROMPTPAY TOP UP / G-WALLET K PLUS WALLET: other
 patterns: []
@@ -30,4 +30,5 @@ clusters:
   - развлечения
   - животные
   - путешествия
+  - MRS. KSENIIA BOBKOVA
   - other
