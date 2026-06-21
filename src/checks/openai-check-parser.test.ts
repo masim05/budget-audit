@@ -30,6 +30,35 @@ describe('resolveOpenAiApiKey', () => {
 });
 
 describe('OpenAiCheckParser', () => {
+  it('uses image/png mime for PNG checks', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.png'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"X","recipient_english":"X","amount_thb":"1.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    await parser.parseChecks(folder);
+
+    const requestBody = JSON.parse(
+      String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'),
+    ) as {
+      input: Array<{ content: Array<{ type: string; image_url?: string }> }>;
+    };
+    const imagePart = requestBody.input[0].content.find(
+      (part) => part.type === 'input_image',
+    );
+    expect(imagePart?.image_url).toContain('data:image/png;base64,');
+  });
+
   it('parses only files within provided date range', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'checks-'));
     await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
@@ -142,6 +171,44 @@ describe('OpenAiCheckParser', () => {
     const checks = await parser.parseChecks(folder);
     expect(checks[0].recipient).toBe('LOTUS');
     expect(checks[0].amountMinor).toBe(10000n);
+  });
+
+  it('falls back to recipient when recipient_english is empty', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text:
+          '{"recipient":"ชื่อไทย","recipient_english":"","amount_thb":"100.00"}',
+      }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    const checks = await parser.parseChecks(folder);
+    expect(checks[0].recipientEnglish).toBe('ชื่อไทย');
+  });
+
+  it('returns warning when output_text and output content are both missing', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(join(folder, '2026-06-01 08-22-54.JPEG'), Buffer.from([1]));
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ output: [{}] }),
+    });
+    const parser = new OpenAiCheckParser(
+      'k',
+      fetchMock as unknown as typeof fetch,
+    );
+
+    const result = await parser.parseChecks(folder);
+    expect(result).toHaveLength(1);
+    expect(result[0].warnings[0]).toContain('did not contain output_text');
   });
 
   it('returns warning on non-ok HTTP response', async () => {

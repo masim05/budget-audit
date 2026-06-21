@@ -1,3 +1,6 @@
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const runClusterMock = vi.fn();
@@ -18,8 +21,8 @@ vi.mock('../cluster/index.js', () => ({
 
 vi.mock('../checks/index.js', () => ({
   OpenAiCheckParser: class {
-    async parseChecks(folderPath: string) {
-      return parseChecksMock(folderPath);
+    async parseChecks(folderPath: string, dateRange?: unknown) {
+      return parseChecksMock(folderPath, dateRange);
     }
   },
   resolveOpenAiApiKey: (...args: unknown[]) => resolveOpenAiApiKeyMock(...args),
@@ -118,6 +121,46 @@ describe('cluster CLI contract', () => {
     expect(stderr).toContain('[cluster] Starting cluster run');
     expect(stderr).toContain('[cluster] Parsing checks');
     expect(stderr).toContain('[cluster] Cluster run completed');
+  });
+
+  it('prints filtering and in-range parsing counts when checks folder exists', async () => {
+    const { runCli } = await import('./main.js');
+    const checksFolder = await mkdtemp(join(tmpdir(), 'checks-'));
+    await writeFile(
+      join(checksFolder, '2026-06-01 09-00-00.JPEG'),
+      Buffer.from([1]),
+    );
+    await writeFile(
+      join(checksFolder, '2026-06-03 09-00-00.JPEG'),
+      Buffer.from([1]),
+    );
+    await writeFile(join(checksFolder, 'bad-name.JPEG'), Buffer.from([1]));
+    await writeFile(join(checksFolder, 'note.txt'), 'ignored', 'utf8');
+
+    let stderr = '';
+    const code = await runCli(
+      [
+        'cluster',
+        '-v',
+        '-sf',
+        '/s',
+        '-cf',
+        checksFolder,
+        '-f',
+        '2026-06-01',
+        '-t',
+        '2026-06-02',
+      ],
+      process.cwd(),
+      {
+        stdout: () => undefined,
+        stderr: (value) => (stderr += value),
+      },
+    );
+
+    expect(code).toBe(0);
+    expect(stderr).toContain('[cluster] Filtering checks (3)');
+    expect(stderr).toContain('[cluster] Parsing checks (1)');
   });
 
   it('prints cluster options in help output', async () => {
