@@ -26,8 +26,12 @@ vi.mock('../checks/index.js', () => ({
     }
   },
   CheckParseCache: class {
-    constructor(public readonly cacheFilePath: string) {}
+    constructor(
+      public readonly cacheFilePath: string,
+      public readonly signature?: string,
+    ) {}
   },
+  CHECK_EXTRACTION_SIGNATURE: 'test-signature',
   resolveOpenAiApiKey: (...args: unknown[]) => resolveOpenAiApiKeyMock(...args),
 }));
 

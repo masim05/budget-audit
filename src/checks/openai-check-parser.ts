@@ -5,6 +5,18 @@ import { isWithinDateRange, type DateRange } from '../shared/date-range.js';
 import { CheckParseCache, type CheckPayload } from './check-parse-cache.js';
 import type { CheckParser, ParsedCheck } from './check-parser.js';
 
+const OPENAI_CHECK_MODEL = 'gpt-4.1-mini';
+const OPENAI_CHECK_PROMPT =
+  'Extract payment recipient and amount from this Thai check image. Return JSON: {"recipient":"...","recipient_english":"...","amount_thb":"123.45"}';
+
+/**
+ * Identifies the extraction configuration (model + prompt) that produced a
+ * cached payload. {@link CheckParseCache} discards entries whose signature no
+ * longer matches, so changing the model or prompt below automatically
+ * invalidates stale cache files — no manual cache-version bump required.
+ */
+export const CHECK_EXTRACTION_SIGNATURE = `${OPENAI_CHECK_MODEL}|${OPENAI_CHECK_PROMPT}`;
+
 interface OpenAiResponse {
   output_text?: string;
   output?: Array<{
@@ -178,14 +190,14 @@ export class OpenAiCheckParser implements CheckParser {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4.1-mini',
+          model: OPENAI_CHECK_MODEL,
           input: [
             {
               role: 'user',
               content: [
                 {
                   type: 'input_text',
-                  text: 'Extract payment recipient and amount from this Thai check image. Return JSON: {"recipient":"...","recipient_english":"...","amount_thb":"123.45"}',
+                  text: OPENAI_CHECK_PROMPT,
                 },
                 {
                   type: 'input_image',

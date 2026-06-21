@@ -4,6 +4,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runAudit } from '../audit/index.js';
 import {
+  CHECK_EXTRACTION_SIGNATURE,
   CheckParseCache,
   OpenAiCheckParser,
   resolveOpenAiApiKey,
@@ -209,7 +210,7 @@ async function runClusterCommand(
   const checkParser = new OpenAiCheckParser(
     apiKey,
     fetch,
-    new CheckParseCache(cachePath),
+    new CheckParseCache(cachePath, CHECK_EXTRACTION_SIGNATURE),
   );
   const checkCounts = await countCheckImages(checksFolder, dateRange);
   if (checkCounts !== undefined) {

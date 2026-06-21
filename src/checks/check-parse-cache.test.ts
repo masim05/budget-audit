@@ -104,6 +104,42 @@ describe('CheckParseCache', () => {
     expect(cache.get('abc')).toBeUndefined();
   });
 
+  it('reuses entries when the signature matches', async () => {
+    const path = await tempCachePath();
+    const writer = new CheckParseCache(path, 'sig-v1');
+    await writer.load();
+    writer.set('abc', payload);
+    await writer.save();
+
+    const reader = new CheckParseCache(path, 'sig-v1');
+    await reader.load();
+    expect(reader.get('abc')).toEqual(payload);
+  });
+
+  it('discards entries written under a different signature', async () => {
+    const path = await tempCachePath();
+    const writer = new CheckParseCache(path, 'sig-v1');
+    await writer.load();
+    writer.set('abc', payload);
+    await writer.save();
+
+    const reader = new CheckParseCache(path, 'sig-v2');
+    await reader.load();
+    expect(reader.get('abc')).toBeUndefined();
+  });
+
+  it('ignores stored signatures when none is configured', async () => {
+    const path = await tempCachePath();
+    const writer = new CheckParseCache(path, 'sig-v1');
+    await writer.load();
+    writer.set('abc', payload);
+    await writer.save();
+
+    const reader = new CheckParseCache(path);
+    await reader.load();
+    expect(reader.get('abc')).toEqual(payload);
+  });
+
   it('ignores a cache file with an unknown version', async () => {
     const path = await tempCachePath();
     const seed = new CheckParseCache(path);

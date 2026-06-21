@@ -15,6 +15,7 @@ export interface CheckPayload {
 
 interface CacheFile {
   version: number;
+  signature?: string;
   entries: Record<string, CheckPayload>;
 }
 
@@ -23,13 +24,21 @@ const CACHE_VERSION = 1;
 /**
  * On-disk cache of OpenAI check-parsing results keyed by image content hash.
  * Identical check images skip the OpenAI request on subsequent runs.
+ *
+ * An optional `signature` ties the cache to the extraction configuration
+ * (model + prompt). Entries written under a different signature are discarded
+ * on load, so changing how checks are parsed automatically invalidates the
+ * cache instead of serving stale results.
  */
 export class CheckParseCache {
   private entries = new Map<string, CheckPayload>();
   private loaded = false;
   private dirty = false;
 
-  constructor(private readonly cacheFilePath: string) {}
+  constructor(
+    private readonly cacheFilePath: string,
+    private readonly signature?: string,
+  ) {}
 
   /** Stable cache key for an image: the SHA-256 hex digest of its bytes. */
   static keyForImage(image: Buffer): string {
@@ -49,6 +58,9 @@ export class CheckParseCache {
     try {
       const parsed = JSON.parse(raw) as CacheFile;
       if (parsed.version !== CACHE_VERSION || !parsed.entries) return;
+      if (this.signature !== undefined && parsed.signature !== this.signature) {
+        return;
+      }
       this.entries = new Map(Object.entries(parsed.entries));
     } catch {
       /* Corrupt cache is ignored and rebuilt on the next save. */
@@ -69,6 +81,7 @@ export class CheckParseCache {
     if (!this.dirty) return;
     const file: CacheFile = {
       version: CACHE_VERSION,
+      signature: this.signature,
       entries: Object.fromEntries(this.entries),
     };
     await mkdir(dirname(this.cacheFilePath), { recursive: true });
