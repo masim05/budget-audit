@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readdir } from 'node:fs/promises';
 import { isAbsolute, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runAudit } from '../audit/index.js';
@@ -197,7 +198,12 @@ async function runClusterCommand(
   // Parse checks once; re-use the results on the second run to avoid
   // redundant OpenAI API calls when --cluster-other triggers a re-cluster.
   const checkParser = new OpenAiCheckParser(apiKey);
-  logVerbose('Parsing checks');
+  const totalChecks = await countCheckImages(checksFolder);
+  logVerbose(
+    totalChecks === undefined
+      ? 'Parsing checks'
+      : `Parsing checks (${totalChecks})`,
+  );
   const parsedChecks = await checkParser.parseChecks(checksFolder);
   const parsedCheckCount = Array.isArray(parsedChecks)
     ? parsedChecks.length
@@ -260,6 +266,15 @@ function parseFormat(value: string | undefined): OutputFormat {
 
 function resolveFromCwd(cwd: string, path: string): string {
   return isAbsolute(path) ? path : resolve(cwd, path);
+}
+
+async function countCheckImages(folderPath: string): Promise<number | undefined> {
+  try {
+    const entries = await readdir(folderPath);
+    return entries.filter((value) => /\.(jpe?g|png)$/i.test(value)).length;
+  } catch {
+    return undefined;
+  }
 }
 
 /* v8 ignore next 16 */
