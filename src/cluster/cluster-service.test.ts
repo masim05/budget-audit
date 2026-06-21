@@ -12,6 +12,74 @@ const config: ClusterConfig = {
 };
 
 describe('cluster service', () => {
+  it('ignores checks outside selected date range', async () => {
+    const source: StatementSource = {
+      async load() {
+        return {
+          sourceName: 'test',
+          sourceLocation: 'test',
+          statementFiles: [],
+          warnings: [],
+          transactions: [
+            {
+              id: 'tx1',
+              date: '2026-06-01',
+              transactionType: 'PMT',
+              transactionNumber: '1001',
+              accountNumber: 'ACC',
+              currency: 'THB',
+              credit: 0n,
+              debit: 8500n,
+              creditAmd: 0n,
+              debitAmd: 0n,
+              remitterOrBeneficiary: 'PMT. PROMPTPAY',
+              details: 'mPhone',
+              directionType: 'Outgoing',
+              sourceFile: 'stmt.pdf',
+              classification: 'invalid',
+            },
+          ],
+        };
+      },
+    };
+
+    const checkParser: CheckParser = {
+      async parseChecks() {
+        return [
+          {
+            filePath: '/tmp/2026-06-03 09-07-25.JPEG',
+            recipient: 'VELO CAFE',
+            recipientEnglish: 'VELO CAFE',
+            amountMinor: 8500n,
+            date: '2026-06-03',
+            time: '09:07',
+            warnings: [],
+          },
+        ];
+      },
+    };
+
+    const report = await runCluster({
+      statementsFolder: './data/statements',
+      checksFolder: './data/checks',
+      dateRange: { from: '2026-06-01', to: '2026-06-02' },
+      approach: 'deterministic',
+      statementSource: source,
+      checkParser,
+      config,
+    });
+
+    expect(report.warnings).toEqual([]);
+    expect(report.clusters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'other', total: 8500n }),
+      ]),
+    );
+    expect(report.unmatchedReceivers).toEqual(
+      expect.arrayContaining(['PMT. PROMPTPAY']),
+    );
+  });
+
   it('keeps only in-range external spend and totals THB by cluster (handles out-of-range counterpart)', async () => {
     const source: StatementSource = {
       async load() {

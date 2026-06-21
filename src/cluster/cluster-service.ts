@@ -13,6 +13,9 @@ export async function runCluster(
   const checks =
     options.parsedChecks ??
     (await options.checkParser.parseChecks(options.checksFolder));
+  const checksInRange = checks.filter((check) =>
+    isWithinDateRange(check.date, options.dateRange),
+  );
   const inRangeTransactions = loaded.transactions.filter((t) =>
     isWithinDateRange(t.date, options.dateRange),
   );
@@ -25,7 +28,7 @@ export async function runCluster(
     // wired in, add a currency guard here to prevent mixing THB totals.
     return classifyExternalTransaction(transaction) === 'spend';
   });
-  const enrichment = enrichRecipientsFromChecks(spendTransactions, checks);
+  const enrichment = enrichRecipientsFromChecks(spendTransactions, checksInRange);
   const enrichedSpendTransactions = enrichment.transactions;
 
   const clusters = new Map<
@@ -77,6 +80,6 @@ export async function runCluster(
     warnings: loaded.warnings
       .concat(movementResult.warnings)
       .concat(enrichment.warnings)
-      .concat(checks.flatMap((check) => check.warnings)),
+      .concat(checksInRange.flatMap((check) => check.warnings)),
   };
 }
